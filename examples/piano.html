@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>PianoQuest!</title>
+    <meta name="description" content="A-Frame - PianoQuest">
+
+    <script src="https://aframe.io/releases/1.1.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-cubemap-component@2.1.1/dist/aframe-cubemap-component.min.js"></script>
+    <script src="https://code.createjs.com/1.0.0/soundjs.min.js"></script>
+    <script src="../dist/aframe-hand-tracking-controls-extras.js"></script>
+
+    <script>
+        AFRAME.registerComponent("touchy-fingertips", {
+            init: function () {
+                let left = document.getElementById("left-hand")
+                let right = document.getElementById("right-hand")
+                this.fingertips = {};
+                this.fingertipsInit = this.fingertipsInit.bind(this);
+
+                // grab the joint references
+                left.addEventListener("hand-tracking-extras-ready", this.fingertipsInit);
+                right.addEventListener("hand-tracking-extras-ready", this.fingertipsInit);
+                this.piano = document.querySelector("[piano]")
+            },
+            fingertipsInit: function (evt) {
+                var side = evt.detail.data.getSide();
+                var joints = evt.detail.data.joints;
+                var fingertips = {};
+                fingertips[side + "Thumb"] = { joint: joints.T_Tip };
+                fingertips[side + "Index"] = { joint: joints.I_Tip };
+                fingertips[side + "Middle"] = { joint: joints.M_Tip };
+                fingertips[side + "Ring"] = { joint: joints.R_Tip };
+                fingertips[side + "Little"] = { joint: joints.L_Tip };
+
+                // get ready for the lines!
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x0000ff,
+                    opacity: 0.75
+                });
+
+                for (let finger in fingertips) {
+                    let points = [new THREE.Vector3(0, 1, -1), new THREE.Vector3(0, 0, -1)];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, material);
+                    line.frustumCulled = false;
+                    line.visible = false;
+                    this.el.object3D.add(line)
+                    fingertips[finger].line = line;
+                    fingertips[finger].points = points;
+                }
+                Object.assign(this.fingertips, fingertips)
+            },
+            tick: (function () {
+                const posV = new THREE.Vector3();
+                const dirV = new THREE.Vector3();
+                const normV = new THREE.Vector3();
+                const angE = new THREE.Euler();
+                const quatQ = new THREE.Quaternion();
+                const raycaster = new THREE.Raycaster();
+                const rayDir = new THREE.Vector3(0, -1, 0);
+                var intersected = {};
+
+                return function () {
+                    // wait for the fingertips
+                    if (Object.keys(this.fingertips).length === 0) return
+
+                    var newIntersections = {};
+                    for (let name in this.fingertips) {
+                        let finger = this.fingertips[name]
+
+                        if (finger.joint.isValid()) {
+                            // debug
+                            finger.joint.getPosition(posV)
+                            finger.points[0].copy(posV);
+                            finger.points[1].copy(finger.points[0]);
+                            finger.points[1].y -= 0.005;
+
+                            finger.line.geometry.setFromPoints(finger.points)
+                            finger.line.visible = true;
+
+                            posV.y += 0.1;
+                            raycaster.set(posV, rayDir)
+                            // check out the far ones
+                            raycaster.far = 0.105;
+                            let obj = raycaster.intersectObject(this.piano.object3D, true)
+
+                            if (obj.length) {
+                                let item = obj[0];
+                                if (newIntersections[item.object.uuid]) continue;
+                                newIntersections[item.object.uuid] = item.object;
+                            }
+                            /* cant press black so hard that white is pressed as well
+                            for (let item of obj) {
+                                if (newIntersections[item.object.uuid]) continue;
+                                newIntersections[item.object.uuid] = item.object;
+                            }*/
+
+                        } else {
+                            finger.line.visible = false;
+                        }
+                    }
+
+                    for (let UUID in intersected) {
+                        // still intersecting - do nothing
+                        if (newIntersections[UUID]) {
+                            delete newIntersections[UUID];
+                            continue;
+                        };
+                        // intersection cleared
+                        if (!newIntersections[UUID]) {
+                            intersected[UUID].onIntersectionCleared();
+                            delete intersected[UUID];
+                        }
+                    }
+
+                    // play new items, and store them for later comparison
+                    for (let newUUID in newIntersections) {
+                        if (!newIntersections[newUUID].intersected)
+                            newIntersections[newUUID].onIntersected();
+                        intersected[newUUID] = newIntersections[newUUID];
+
+                    }
+                }
+            })()
+        })
+
+        AFRAME.registerComponent("piano", {
+            init: function () {
+                /* Natural Keys */
+                let naturalKeyGeometry = new THREE.BoxBufferGeometry(0.02, 0.005, 0.1);
+                const naturalRange = ["A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5"];
+                const pianoPath = "assets/piano/";
+                const extension = ".mp3";
+                naturalRange.forEach((note, index) => {
+                    // load the audio elements
+                    createjs.Sound.registerSound(pianoPath + note + extension, note);
+
+                    // create the 3js object;
+                    let key = this.createKey(naturalKeyGeometry, new THREE.MeshBasicMaterial({ color: 0xfafafa }), note, 0.0225 * index, 0, 0);
+                    this.el.object3D.add(key);
+                })
+
+                /* Flat keys */
+                let flatKeyGeometry = new THREE.BoxBufferGeometry(0.0175, 0.005, 0.075);
+                const flatrange = ["Bb3", null, "Db4", "Eb4", null, "Gb4", "Ab4", "Bb4", null, "Db5", "Eb5"];
+                flatrange.forEach((note, index) => {
+                    // skip the nulls
+                    if (!note) return;
+
+                    // load the audio elements
+                    createjs.Sound.registerSound(pianoPath + note + extension, note);
+
+                    // create the 3js object;
+                    let key = this.createKey(flatKeyGeometry, new THREE.MeshBasicMaterial({ color: 0x0a0a0a }), note, 0.022 * index + 0.0125, 0.005, -0.04);
+                    this.el.object3D.add(key);
+                })
+            },
+            createKey(geometry, material, name, xPos, yPos, zPos) {
+                let key = new THREE.Mesh(geometry, material);
+                key.name = name;
+                key.position.set(xPos, yPos, zPos);
+                key.originalColor = material.color.getHex();
+                key.onIntersected = function () {
+                    // handle audio
+                    if (!key.audioInstance) {
+                        key.audioInstance = createjs.Sound.play(key.name);
+                        key.audioInstance.duration = 750;
+                    }
+
+                    if (key.audioInstance.position) key.audioInstance.stop();
+                    key.audioInstance.play();
+                    key.intersected = true;
+                    key.material.color.setHex(0x00ff00);
+                }
+                key.onIntersectionCleared = function () {
+                    key.intersected = false;
+                    key.material.color.setHex(key.originalColor);
+                }
+                return key;
+            },
+            remove: function () {
+                this.el.object3D.children.forEach(node => {
+                    // get rid of the sound, geometry and material
+                    node.parent.remove(node);
+                    node.audioInstance.destroy();
+                    node.geometry.dispose();
+                    node.material.dispose();
+                })
+            }
+        })
+
+        AFRAME.registerComponent("start-the-show", {
+            init: function () {
+                let left = document.getElementById("left-hand")
+                let right = document.getElementById("right-hand")
+                this.fingertips = {};
+                this.setRWrist = this.setWrist.bind(this, "Right");
+                this.setLWrist = this.setWrist.bind(this, "Left");
+                this.cleanup = this.cleanup.bind(this);
+
+                // grab the joint references
+                left.addEventListener("hand-tracking-extras-ready", this.setLWrist);
+                right.addEventListener("hand-tracking-extras-ready", this.setRWrist);
+                this.el.addEventListener("animationcomplete", this.cleanup)
+            },
+            setWrist: function (side, evt) {
+                this[side + "Wrist"] = evt.detail.data.joints.Wrist;
+            },
+            cleanup: function () {
+                this.el.sceneEl.removeChild(this.el)
+            },
+            tick: (function () {
+                let lWristPos = new THREE.Vector3();
+                let rWristPos = new THREE.Vector3();
+                let camPos = new THREE.Vector3();
+                let animation = false;
+
+                return function () {
+                    if (animation) return;
+                    if (! (this["RightWrist"] && this["LeftWrist"])) return;
+
+                    let cam = document.querySelector("[camera]")
+                    camPos.copy(cam.object3D.position);
+
+                    this.RightWrist.getPosition(rWristPos);
+                    this.RightWrist.getPosition(lWristPos);
+
+                    if (rWristPos.y - camPos.y > 0.1 || lWristPos.y - camPos.y > 0.1) {
+                        animation = true;
+                        this.el.emit("woopwoop")
+                    }
+
+                }
+            })(),
+            remove: function () {
+                this.el.removeEventListener("animationcomplete", this.cleanup)
+
+                let left = document.getElementById("left-hand")
+                let right = document.getElementById("right-hand")
+                left.removeEventListener("hand-tracking-extras-ready", this.setLWrist);
+                right.removeEventListener("hand-tracking-extras-ready", this.setRWrist);
+            }
+        })
+    </script>
+</head>
+
+<body>
+    <a-scene touchy-fingertips>
+        <a-entity cubemap="folder: assets/cubemaps/SwedishRoyalCastle/; edgeLength:500"></a-entity>
+
+        <a-entity position="0 1 -0.25" piano></a-entity>
+        <a-entity id="left-hand" hand-tracking-controls="hand: left; " hand-tracking-extras>
+        </a-entity>
+        <a-entity id="right-hand" hand-tracking-controls="hand: right" hand-tracking-extras>
+        </a-entity>
+        <a-sky color="#26184a" start-the-show
+            animation="property: material.opacity; to: 0.0; from: 1.0; dur: 1000; easing: easeOutQuad; startEvents: woopwoop">
+        </a-sky>
+
+    </a-scene>
+</body>
+
+</html>

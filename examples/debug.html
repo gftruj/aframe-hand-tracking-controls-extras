@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>hello testing!</title>
+    <meta name="description" content="hello testing! A-Frame">
+
+    <script src="https://aframe.io/releases/1.1.0/aframe.min.js"></script>
+    <script src="../dist/aframe-hand-tracking-controls-extras.js"></script>
+
+    <script>
+        AFRAME.registerComponent("test", {
+            init: function () {
+                let hand = this.el.getAttribute("hand-tracking-controls").hand;
+                this.txt = document.querySelector("#data-" + hand);
+                this.box = document.querySelector("#box-" + hand);
+            },
+            tick: (function () {
+                const posV = new THREE.Vector3();
+                const dirV = new THREE.Vector3();
+                const normV = new THREE.Vector3();
+                const angE = new THREE.Euler();
+                const quatQ = new THREE.Quaternion();
+
+                return function () {
+                    if (!this.txt) return;
+
+                    // grab the hand-extras
+                    let handcomp = this.el.components["hand-tracking-extras"]
+                    if (!handcomp.HandData) return;
+
+                    let index = handcomp.HandData.joints.I_Tip;
+
+                    let pos = index.getPosition(posV);
+                    let dir = index.getDirection(dirV);
+                    let norm = index.getNormal(normV);
+                    let quat = index.getQuaternion(quatQ);
+                    let euler = angE.setFromQuaternion(quatQ);
+
+                    this.box.object3D.quaternion.copy(quatQ)
+
+                    let txt = "Index tip:"
+                    txt = "\nPos: " + pos.x.toFixed(2) + " " + pos.y.toFixed(2) + " " + pos.z.toFixed(2)
+                    txt += "\nDir: " + dir.x.toFixed(2) + " " + dir.y.toFixed(2) + " " + dir.z.toFixed(2)
+                    txt += "\nNormal: " + norm.x.toFixed(2) + " " + norm.y.toFixed(2) + " " + norm.z.toFixed(2)
+                    txt += "\nAng: " + euler.x.toFixed(2) + " " + euler.y.toFixed(2) + " " + euler.z.toFixed(2)
+                    txt += "\nRadius " + index.getRadius();
+                    txt += "\nvalid: " + index.isValid();
+                    this.txt.setAttribute("value", txt)
+                }
+            })()
+        })
+
+        AFRAME.registerComponent("show-fingertips", {
+            init: function () {
+                // grab the joint references
+                this.el.addEventListener("hand-tracking-extras-ready", evt => {
+                    var joints = evt.detail.data.joints;
+                    this.fingertips = {
+                        Thumb: { joint: joints.T_Tip },
+                        Index: { joint: joints.I_Tip },
+                        Middle: { joint: joints.M_Tip },
+                        Ring: { joint: joints.R_Tip },
+                        Little: { joint: joints.L_Tip }
+                    }
+
+                    for (let finger in this.fingertips) {
+                        let box = document.createElement("a-box");
+                        box.setAttribute("scale", "0.01 0.01 0.01")
+                        box.setAttribute("color", "#26184a")
+                        box.setAttribute("visible", "false")
+                        this.el.sceneEl.appendChild(box)
+                        this.fingertips[finger].el = box;
+                    }
+                })
+            },
+            tick: (function () {
+                const posV = new THREE.Vector3();
+                const dirV = new THREE.Vector3();
+                const normV = new THREE.Vector3();
+                const angE = new THREE.Euler();
+                const quatQ = new THREE.Quaternion();
+
+
+                return function () {
+                    if (!this.fingertips) return;
+
+                    for (let name in this.fingertips) {
+                        let finger = this.fingertips[name]
+                        if (finger.joint.isValid()) {
+                            
+                            finger.el.setAttribute("visible", true)
+                            finger.joint.getPosition(posV);
+                            posV.z -= 0.25;
+                            finger.el.setAttribute("position", posV);
+                        } else {   
+                            finger.el.setAttribute("visible", false)
+                        }
+                    }
+                }
+            })()
+        })
+    </script>
+</head>
+
+<body>
+    <a-scene>
+        <a-text id="data-left" color="black" position="-2 1 -4"></a-text>
+        <a-text id="data-right" color="black" position="2 1 -4"></a-text>
+
+        <a-box id="box-left" scale="0.1 0.1 0.4" position="-2 1 -3" color="red">
+            <a-sphere color="green" position="0 0 -1"></a-sphere>
+        </a-box>
+        <a-box id="box-right" scale="0.1 0.1 0.4" position="2 1 -3" color="red">
+            <a-sphere color="green" position="0 0 -1"></a-sphere>
+        </a-box>
+        <a-entity id="left-hand" hand-tracking-controls="hand: left; modelStyle: dots" 
+        hand-tracking-extras test>
+        </a-entity>
+        <a-entity id="right-hand" hand-tracking-controls="hand: right" hand-tracking-extras
+        show-fingertips test></a-entity>
+        <a-sky></a-sky>
+    </a-scene>
+</body>
+
+</html>

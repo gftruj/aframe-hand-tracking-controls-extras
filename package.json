@@ -1,0 +1,28 @@
+{
+  "name": "aframe-hand-tracking-controls-extras",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "browserify src/index.js -o dist/aframe-hand-tracking-controls-extras.js",
+    "build-min": "browserify src/index.js | uglifyjs > aframe-hand-tracking-controls-extras.min.js",
+    "web-build": "browserify src/hand-tracking-extras.js -p esmify > dist/aframe-hand-tracking-controls-extras.js"
+  },
+  "devDependencies": {
+    "aframe": "^1.0.4",
+    "super-three": "^0.123.1",
+    "browserify": "*",
+    "esmify": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gftruj/aframe-hand-tracking-controls-extras.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gftruj/aframe-hand-tracking-controls-extras/issues"
+  },
+  "homepage": "https://github.com/gftruj/aframe-hand-tracking-controls-extras#readme"
+}
