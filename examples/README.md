@@ -12,3 +12,7 @@ PianoQuest? Check it out [here](https://gftruj.github.io/hand.tracking.controls.
 Worth noting:
 - raycaster collision detection
 - soundjs amazing response time compared to HTML Audio (play/pause, or mute/unmute)
+
+Credits (more detailed at each asset directory):
+- Sound sampled directly from this [repo](https://github.com/gleitz/midi-js-soundfonts).
+- Cubemap by Emil Persson, aka Humus. http://www.humus.name
