@@ -75,51 +75,50 @@ exports.default = void 0;
 var _handdata = require("./handdata");
 
 var _default = AFRAME.registerComponent("hand-tracking-extras", {
-  schema: {
-    // whether you want to override the default behaviour
-    override: {
-      default: true
-    }
-  },
   init: function () {
-    // parasite off the existing components
-    const handTrackingComp = this.el.components["hand-tracking-controls"];
-    const hand = this.el.getAttribute("hand-tracking-controls").hand;
-    var trackedControlsComp = this.el.components["tracked-controls"];
-    var trackedControlsWebXrComp = this.el.components["tracked-controls-webxr"];
+    this.el.addEventListener("enter-vr", this.play);
+    this.el.addEventListener("exit-vr", this.pause);
+    this.side = this.el.getAttribute("hand-tracking-controls").hand;
+  },
+  tick: function () {
+    return function () {
+      if (this.isPaused) return;
+      var controller = this.el.components['tracked-controls'] && this.el.components['tracked-controls'].controller;
+      var trackedControlsWebXR = this.el.components['tracked-controls-webxr'];
+      if (!trackedControlsWebXR) return;
+      var referenceSpace = trackedControlsWebXR.system.referenceSpace;
+      var frame = this.el.sceneEl.frame;
 
-    if (!handTrackingComp) {
-      console.warn("hand-tracking-extras require hand-tracking-controls. The component needs to be re-attached");
-      return;
-    }
+      if (!controller || !frame || !referenceSpace) {
+        return;
+      }
 
-    var self = this;
+      if (!this.HandData) {
+        this.HandData = new _handdata.HandData(this.side);
+        this.el.emit("hand-tracking-extras-ready", {
+          data: this.HandData
+        });
+      }
 
-    if (this.data.override) {
-      // don't like this bit - hacking into the actual hand tracking controls.
-      var bind = AFRAME.utils.bind;
-      handTrackingComp.detectGesture = bind(() => {
-        if (!trackedControlsComp && !trackedControlsWebXrComp) {
-          trackedControlsComp = this.el.components["tracked-controls"];
-          trackedControlsWebXrComp = this.el.components["tracked-controls-webxr"];
-          return;
-        }
+      this.HandData.updateData(controller, frame, referenceSpace);
+    };
+  }(),
+  play: function () {
+    this.isPaused = false;
+  },
+  pause: function () {
+    this.isPaused = true;
+  },
+  remove: function () {
+    this.el.removeEventListener("enter-vr", this.play);
+    this.el.removeEventListener("exit-vr", this.pause);
+  },
 
-        if (!self.HandData) {
-          self.HandData = new _handdata.HandData(hand);
-          self.el.emit("hand-tracking-extras-ready", {
-            data: self.HandData
-          });
-        }
-
-        var frame = this.el.sceneEl.frame;
-        var controller = trackedControlsComp && trackedControlsComp.controller;
-        var referenceSpace = this.referenceSpace || trackedControlsWebXrComp.system.referenceSpace;
-        if (!(frame && controller && referenceSpace)) return;
-        self.HandData.updateData(controller, frame, referenceSpace);
-      });
-    }
+  getJoints() {
+    if (this.HandData) return this.HandData.joints;
+    return null;
   }
+
 });
 
 exports.default = _default;
@@ -215,14 +214,14 @@ function HandData(_side) {
 
   const side = _side;
 
-  this.getSide = () => side; // I'm out of time to figure out what i've screwed up in the calculations. So the hands need opposite quats
-  // "normal" is actually the "inside" 
+  this.getSide = () => side; // "normal" is actually the "inside" 
 
 
   const leftNormalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
   const rightNormalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
-  const positiveXQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
-  const negativeXQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -Math.PI / 2, 0));
+  const normalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+  const rightHandOrientationBias = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
+  const leftHandOrientationBias = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI, -Math.PI / 2, 0));
 
   function toForward(vector) {
     return vector.set(0, 0, -1);
@@ -230,7 +229,8 @@ function HandData(_side) {
 
   this.getOrientedQuaternion = (id, _quaternion) => {
     // lol this bit
-    let orientation = side === "left" ? negativeXQuaternion : positiveXQuaternion;
+    let orientation = side === "left" ? leftHandOrientationBias : rightHandOrientationBias;
+    let quaternion = _quaternion ? _quaternion : tmpQuaternion.clone();
     return this.getPoseQuaternion(id, _quaternion).multiply(orientation);
   };
 
@@ -243,7 +243,7 @@ function HandData(_side) {
   this.getNormal = (id, _vector) => {
     let vector = _vector ? _vector : tmpVector.clone();
     let normalQ = side === "left" ? leftNormalQuaternion : rightNormalQuaternion;
-    this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQ);
+    this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQuaternion);
     tmpDummy.quaternion.copy(tmpQuaternion);
     tmpDummy.getWorldDirection(vector);
     return vector;

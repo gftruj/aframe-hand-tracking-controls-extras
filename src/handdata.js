@@ -87,13 +87,13 @@ export function HandData(_side) {
     // hand orientation helpers
     const side = _side;
     this.getSide = () => side;
-    // I'm out of time to figure out what i've screwed up in the calculations. So the hands need opposite quats
     // "normal" is actually the "inside" 
     const leftNormalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
     const rightNormalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
 
-    const positiveXQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
-    const negativeXQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -Math.PI / 2, 0));
+    const normalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+    const rightHandOrientationBias = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI/2, 0));
+    const leftHandOrientationBias = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI, -Math.PI/2, 0));
 
      function toForward(vector) {
         return vector.set(0, 0, -1);
@@ -101,7 +101,8 @@ export function HandData(_side) {
     
     this.getOrientedQuaternion = (id, _quaternion) => {
         // lol this bit
-        let orientation = side === "left" ? negativeXQuaternion : positiveXQuaternion;
+        let orientation = side === "left" ? leftHandOrientationBias : rightHandOrientationBias;
+        let quaternion = _quaternion ? _quaternion : tmpQuaternion.clone();
         return this.getPoseQuaternion(id, _quaternion).multiply(orientation);
     }
 
@@ -114,7 +115,7 @@ export function HandData(_side) {
     this.getNormal = (id, _vector) => {
         let vector = _vector ? _vector : tmpVector.clone();
         let normalQ = side === "left" ? leftNormalQuaternion : rightNormalQuaternion;
-        this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQ);
+        this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQuaternion);
 
         tmpDummy.quaternion.copy(tmpQuaternion)
         tmpDummy.getWorldDirection(vector);

@@ -1,44 +1,44 @@
 import { HandData } from './handdata';
 
 export default AFRAME.registerComponent("hand-tracking-extras", {
-    schema: {
-        // whether you want to override the default behaviour
-        override: { default: true }
-    },
     init: function () {
-        // parasite off the existing components
-        const handTrackingComp = this.el.components["hand-tracking-controls"];
-        const hand = this.el.getAttribute("hand-tracking-controls").hand;
-        var trackedControlsComp = this.el.components["tracked-controls"];
-        var trackedControlsWebXrComp = this.el.components["tracked-controls-webxr"];
+        this.el.addEventListener("enter-vr", this.play);
+        this.el.addEventListener("exit-vr", this.pause);
+        this.side = this.el.getAttribute("hand-tracking-controls").hand;
+    },
+    tick: (function() {
+        return function() {
+        if (this.isPaused) return;
+        var controller = this.el.components['tracked-controls'] && this.el.components['tracked-controls'].controller;
+        
+        var trackedControlsWebXR = this.el.components['tracked-controls-webxr'];
+        if (!trackedControlsWebXR) return;
 
-        if (!handTrackingComp) {
-            console.warn("hand-tracking-extras require hand-tracking-controls. The component needs to be re-attached")
-            return;
+        var referenceSpace = trackedControlsWebXR.system.referenceSpace;
+        var frame = this.el.sceneEl.frame;
+
+        if (!controller || !frame || !referenceSpace) { return; }
+
+        if (!this.HandData) {
+            this.HandData = new HandData(this.side);
+            this.el.emit("hand-tracking-extras-ready", {data: this.HandData})
         }
- 
-        var self = this;
-        if (this.data.override) {
-            // don't like this bit - hacking into the actual hand tracking controls.
-            var bind = AFRAME.utils.bind;
-            handTrackingComp.detectGesture = bind(() => {
-                if (!trackedControlsComp && !trackedControlsWebXrComp) {
-                    trackedControlsComp = this.el.components["tracked-controls"];
-                    trackedControlsWebXrComp = this.el.components["tracked-controls-webxr"];
-                    return;
-                }
 
-                if (!self.HandData) {
-                    self.HandData = new HandData(hand);
-                    self.el.emit("hand-tracking-extras-ready", {data: self.HandData})
-                }
-
-                var frame = this.el.sceneEl.frame;
-                var controller = trackedControlsComp && trackedControlsComp.controller;
-                var referenceSpace = this.referenceSpace || trackedControlsWebXrComp.system.referenceSpace;
-                if (!(frame && controller && referenceSpace)) return;
-                self.HandData.updateData(controller, frame, referenceSpace)
-            })
-        }
+        this.HandData.updateData(controller, frame, referenceSpace)
+    }
+    })(),
+    play: function() {
+        this.isPaused = false;
+    },
+    pause: function() {
+        this.isPaused = true;
+    },
+    remove: function() {
+        this.el.removeEventListener("enter-vr", this.play);
+        this.el.removeEventListener("exit-vr", this.pause)
+    },
+    getJoints() {
+        if (this.HandData) return this.HandData.joints;
+        return null;
     }
 })
