@@ -45,8 +45,8 @@ Joint object method  | Description
 `getPosition(vector)` | fills the vector with the joint position
 `getDirection(vector)` | fills the vector with the normalized direction
 `getNormal(vector)` | fills the vector with the normal vector (looking inside the face)
-`getRawQuaternion(quaternion)` | fills the quaternion with the raw quaternion data from the XRApi
-`getQuaternion(quaternion)` | fills the "oriented" quaternion with the raw quaternion data from the XRApi
+`getRawQuaternion(quaternion)` | fills the quaternion with the raw quaternion data 
+`getQuaternion(quaternion)` | the raw quaternion is rotated (WIP) so this one is supposed to be "correct"
 `getRadius()` | joint radius
 `isValid()` | whether we could read the pose data
 
