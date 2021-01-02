@@ -1,10 +1,5 @@
 # hand-tracking-controls-extras
 
-## Why?
-
-To provide a simplified API to get the [joints](https://immersive-web.github.io/webxr-hand-input/#skeleton-joints-section) data
-    - Position, Quaternion, Direction, "Normal" (inside - palm), radius, validity
-
 ## How to use it
 
 Import the script:
@@ -38,43 +33,59 @@ Joint object method  | Description
 ------------- | ------------- 
 `getPosition(vector)` | fills the vector with the joint position
 `getDirection(vector)` | fills the vector with the normalized direction
-`getNormal(vector)` | fills the vector with the normal vector (looking inside the face)
-`getRawQuaternion(quaternion)` | fills the quaternion with the raw quaternion data 
-`getQuaternion(quaternion)` | the raw quaternion is rotated (WIP) so this one is supposed to be "correct"
-`getRadius()` | joint radius
+`getNormal(vector)` | fills the vector with the normal vector (see image below).
+`getRawQuaternion(quaternion)` | fills the quaternion with the raw joint orientation (see image below).
+`getQuaternion(quaternion)` | fills the quaternion with a "correct" joint orientation (see image below). 
+`getRadius()` | get joint radius
 `isValid()` | whether we could read the pose data
+
+
+#### Visual aid
+
+ getQuaternion (above hand) vs getRawQuaternion (right from hand):
+![rawQ vs Q](https://github.com/gftruj/aframe-hand-tracking-controls-extras/blob/master/screens/orientations.jpg?raw=true "rawQ vs Q")
+
+"Normal" blue line
+![rawQ vs Q](https://github.com/gftruj/aframe-hand-tracking-controls-extras/blob/master/screens/normals.jpg?raw=true "Normals")
+
 
 ### Joints
 
+From the [WebXR hand docs](https://immersive-web.github.io/webxr-hand-input/#xrjointpose):
+
+![rawQ vs Q](https://immersive-web.github.io/webxr-hand-input/images/hand-layout.svg?raw=true "Normals")
+
+
 Similar to the WebXR hand API, the joints are
 
-Joint name  | XRHand corresponding name
+Joint name  | XRHand corresponding name (index)
 ------------- | -------------   
-Wrist | XRHand.WRIST 
-T_Metacarpal | XRHand.THUMB_METACARPAL
-T_Proximal | XRHand.THUMB_PHALANX_PROXIMAL
-T_Distal | XRHand.THUMB_PHALANX_DISTAL
-T_Tip | XRHand.THUMB_PHALANX_TIP
-I_Metacarpal | XRHand.INDEX_METACARPAL
-I_Proximal | XRHand.INDEX_PHALANX_PROXIMAL
-I_Intermediate | XRHand.INDEX_PHALANX_INTERMEDIATE
-I_Distal | XRHand.INDEX_PHALANX_DISTAL
-I_Tip | XRHand.INDEX_PHALANX_TIP
-M_Metacarpal | XRHand.MIDDLE_METACARPAL
-M_Proximal | XRHand.MIDDLE_PHALANX_PROXIMAL
-M_Intermediate | XRHand.MIDDLE_PHALANX_INTERMEDIATE
-M_Distal | XRHand.MIDDLE_PHALANX_DISTAL
-M_Tip | XRHand.MIDDLE_PHALANX_TIP
-R_Metacarpal | XRHand.RING_METACARPAL
-R_Proximal | XRHand.RING_PHALANX_PROXIMAL
-R_Intermediate | RHand.RING_PHALANX_INTERMEDIATE
-R_Distal | XRHand.RING_PHALANX_DISTAL
-R_Tip: new JointObject(XRHand.RING_PHALANX_TIP
-L_Metacarpal | XRHand.LITTLE_METACARPAL
-L_Proximal | XRHand.LITTLE_PHALANX_PROXIMAL
-L_Intermediate | XRHand.LITTLE_PHALANX_INTERMEDIATE
-L_Distal | XRHand.LITTLE_PHALANX_DISTAL
-L_Tip | XRHand.LITTLE_PHALANX_TIP
+Wrist | XRHand.WRIST (0)
+T_Metacarpal | XRHand.THUMB_METACARPAL (1)
+T_Proximal | XRHand.THUMB_PHALANX_PROXIMAL (2)
+T_Distal | XRHand.THUMB_PHALANX_DISTAL (3)
+T_Tip | XRHand.THUMB_PHALANX_TIP (4)
+I_Metacarpal | XRHand.INDEX_METACARPAL (5)
+I_Proximal | XRHand.INDEX_PHALANX_PROXIMAL (6)
+I_Intermediate | XRHand.INDEX_PHALANX_INTERMEDIATE (7)
+I_Distal | XRHand.INDEX_PHALANX_DISTAL (8)
+I_Tip | XRHand.INDEX_PHALANX_TIP (9)
+M_Metacarpal | XRHand.MIDDLE_METACARPAL (10)
+M_Proximal | XRHand.MIDDLE_PHALANX_PROXIMAL (11)
+M_Intermediate | XRHand.MIDDLE_PHALANX_INTERMEDIATE (12)
+M_Distal | XRHand.MIDDLE_PHALANX_DISTAL (13)
+M_Tip | XRHand.MIDDLE_PHALANX_TIP (14)
+R_Metacarpal | XRHand.RING_METACARPAL (15)
+R_Proximal | XRHand.RING_PHALANX_PROXIMAL (16)
+R_Intermediate | RHand.RING_PHALANX_INTERMEDIATE (17)
+R_Distal | XRHand.RING_PHALANX_DISTAL (18)
+R_Tip | XRHand.RING_PHALANX_TIP (19)
+L_Metacarpal | XRHand.LITTLE_METACARPAL (20)
+L_Proximal | XRHand.LITTLE_PHALANX_PROXIMAL (21)
+L_Intermediate | XRHand.LITTLE_PHALANX_INTERMEDIATE (22)
+L_Distal | XRHand.LITTLE_PHALANX_DISTAL (23)
+L_Tip | XRHand.LITTLE_PHALANX_TIP (24)
+
 
 
 ### Roadmap - wishful thinking
