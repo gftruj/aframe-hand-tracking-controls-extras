@@ -4,12 +4,6 @@
 
 To provide a simplified API to get the [joints](https://immersive-web.github.io/webxr-hand-input/#skeleton-joints-section) data
     - Position, Quaternion, Direction, "Normal" (inside - palm), radius, validity
-    
-## Work in progress warning
-
-As of today:
-- overrides the default pinch detection. 
-- The quaternions and directions need a solid look. Gets buggy when oriented towards positive z ?
 
 ## How to use it
 
