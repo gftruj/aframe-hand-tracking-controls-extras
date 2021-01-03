@@ -91,6 +91,7 @@ L_Tip | XRHand.LITTLE_PHALANX_TIP (24)
 ### Roadmap - wishful thinking
 
 Provide:
+0. helper components - stats, and pinch-cursor
 1. a simple API for Joints orientation and relations:
     - `.islookingUp()`, `isHorizontallyAligned()`, `.isCloseTo(other)`, `orientedLike(other)`
 
