@@ -4,7 +4,7 @@
 
 Import the script:
 
-    <script src="https://gftruj.github.io/hand-tracking-controls-extras/dist/aframe-hand-tracking-controls-extras.js></script>
+    <script src="https://gftruj.github.io/hand.tracking.controls.extras/dist/aframe-hand-tracking-controls-extras.js></script>
 
 Add the `hand-tracking-extras` to the hand:
  
