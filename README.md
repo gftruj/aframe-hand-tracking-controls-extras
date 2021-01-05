@@ -91,7 +91,12 @@ L_Intermediate | XRHand.LITTLE_PHALANX_INTERMEDIATE (22)
 L_Distal | XRHand.LITTLE_PHALANX_DISTAL (23)
 L_Tip | XRHand.LITTLE_PHALANX_TIP (24)
 
+### Little disclaimer
 
+When I rushed at `a-frame`s finger tracking I wasn't aware, that I'm kinda reinventing the wheel.
+A great place with multiple examples is [Marlon Lückerts repository](https://github.com/marlon360/webxr-handtracking).
+
+On the other hand, I've learned a lot doing this, and am fully willing to continue :)
 
 ### Roadmap - wishful thinking
 
