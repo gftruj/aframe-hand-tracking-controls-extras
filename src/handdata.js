@@ -97,9 +97,7 @@ export function HandData(_side) {
     }
     
     this.getOrientedQuaternion = (id, _quaternion) => {
-        // lol this bit
         let orientation = side === "left" ? leftHandOrientationBias : rightHandOrientationBias;
-        let quaternion = _quaternion ? _quaternion : tmpQuaternion.clone();
         return this.getPoseQuaternion(id, _quaternion).multiply(orientation);
     }
 
@@ -111,7 +109,6 @@ export function HandData(_side) {
 
     this.getNormal = (id, _vector) => {
         let vector = _vector ? _vector : tmpVector.clone();
-        let normalQ = side === "left" ? leftNormalQuaternion : rightNormalQuaternion;
         this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQuaternion);
 
         tmpDummy.quaternion.copy(tmpQuaternion)
