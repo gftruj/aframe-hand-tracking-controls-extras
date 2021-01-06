@@ -188,6 +188,9 @@ function HandData(_side) {
 
   this.updateData = (controller, frame, referenceSpace) => {
     for (let joint in this.joints) {
+      // the XRHand joints can be nulls
+      if (!controller.hand[this.joints[joint].id]) continue; // grab the pose and gather data
+
       var rawPose = frame.getJointPose(controller.hand[this.joints[joint].id], referenceSpace);
 
       if (rawPose) {
@@ -226,9 +229,7 @@ function HandData(_side) {
   }
 
   this.getOrientedQuaternion = (id, _quaternion) => {
-    // lol this bit
     let orientation = side === "left" ? leftHandOrientationBias : rightHandOrientationBias;
-    let quaternion = _quaternion ? _quaternion : tmpQuaternion.clone();
     return this.getPoseQuaternion(id, _quaternion).multiply(orientation);
   };
 
@@ -240,7 +241,6 @@ function HandData(_side) {
 
   this.getNormal = (id, _vector) => {
     let vector = _vector ? _vector : tmpVector.clone();
-    let normalQ = side === "left" ? leftNormalQuaternion : rightNormalQuaternion;
     this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQuaternion);
     tmpDummy.quaternion.copy(tmpQuaternion);
     tmpDummy.getWorldDirection(vector);

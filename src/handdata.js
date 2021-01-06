@@ -57,7 +57,12 @@ export function HandData(_side) {
 
     // iterate through the poses and update the arrays
     this.updateData = (controller, frame, referenceSpace) => {
+
         for (let joint in this.joints) {
+            // the XRHand joints can be nulls
+            if (!controller.hand[this.joints[joint].id]) continue;
+
+            // grab the pose and gather data
             var rawPose = frame.getJointPose(controller.hand[this.joints[joint].id], referenceSpace);
             if (rawPose) {
                 setDataFromPose(this.joints[joint].id, rawPose)
