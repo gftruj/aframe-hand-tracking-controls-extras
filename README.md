@@ -1,7 +1,14 @@
 # hand-tracking-controls-extras
 
+
+Simplified Joints API + utility helpers like a teleporter and world drag:
+
+![Navigation](screens/navigation.gif)
+
+
 ## How to use it
 
+### Hands in browser:
 Enable the experimental feature in the browser (Oculus Browser 11)
 
     1.  Visit [chrome://flags/](chrome://flags/)
