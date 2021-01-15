@@ -1,0 +1,28 @@
+<script src="https://aframe.io/releases/1.1.0/aframe.min.js"></script>
+<script src="https://unpkg.com/aframe-environment-component@1.1.0/dist/aframe-environment-component.min.js"></script>
+
+<script src="../../dist/aframe-hand-tracking-controls-extras.js"></script>
+<script src="../../components/dist/hand-tracking-controls-extras-components.js"></script>
+<script src="./components/obelisk.js"></script>
+
+<a-scene>
+  <!-- enviro -->
+  <a-entity environment="preset: yavapai"></a-entity>
+
+  <!-- obelisks -->
+  <a-entity position="6 0 -6" obelisk="color: yellow; cubemap: assets/cubemaps/GamlaStan" freeze-workaround></a-entity>
+  <a-entity position="6 0 6" obelisk="color: red; cubemap: assets/cubemaps/UnionSquare" freeze-workaround></a-entity>
+  <a-entity position="-6 0 6" obelisk="color: blue; cubemap: assets/cubemaps/GamlaStan2" freeze-workaround></a-entity>
+  <a-entity position="-6 0 -6" obelisk="color: green; cubemap: assets/cubemaps/Medborgarplatsen" freeze-workaround>
+  </a-entity>
+
+  <!-- a rig for the entire "user" is required if. Otherwise I would have to meddle in the hand-tracking-controls afaik -->
+  <a-entity id="rig">
+    <a-camera>
+    </a-camera>
+    <a-entity id="left-hand" hand-tracking-controls="hand: left" hand-tracking-extras
+      hand-teleport="rig: #rig; origin: a-camera">
+    </a-entity>
+    <a-entity id="right-hand" hand-tracking-controls="hand: right" hand-tracking-extras world-drag="rig: #rig"></a-entity>
+  </a-entity>
+</a-scene>
