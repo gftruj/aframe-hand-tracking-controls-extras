@@ -1,6 +1,8 @@
 export const component = AFRAME.registerComponent("world-drag", {
     schema: {
-        rig: { type: "selector" }
+        rig: { type: "selector" },
+        fingerToHMDHeight: {default: 0.15},
+        fingerToHMDDistance: {default: 0.6}
     },
     init: function () {
         this.isPinching = false;
@@ -23,11 +25,11 @@ export const component = AFRAME.registerComponent("world-drag", {
         this.joints = evt.detail.data.joints
     },
     remove: function () {
+        this.el.removeEventListener("hand-tracking-extras-ready", this.handExtrasReady)
         this.el.removeEventListener("pinchstarted", this.pinchUp);
         this.el.removeEventListener("pinchended", this.pinchDown);
     },
     tick: (function () {
-
         const indexPosition = new THREE.Vector3();
         const cameraPosition = new THREE.Vector3();
         const hand_camera_orientation = new THREE.Vector2();
@@ -35,19 +37,39 @@ export const component = AFRAME.registerComponent("world-drag", {
 
         var prevAngle = undefined;
 
+        function stopDragging(el) {
+            prevAngle = undefined;
+            el.emit("dragend")
+        }
+
         return function () {
             if (!this.joints) return;
 
+            let el = this.el;
             let index = this.joints.I_Tip;
             if (!index.isValid()) {
-                return;
+                return stopDragging(el);
             }
 
             index.getPosition(indexPosition);
             cameraPosition.copy(this.camera.object3D.position);
 
-            // position on head level near head
-            if (Math.abs(indexPosition.y - cameraPosition.y) < 0.15 && indexPosition.distanceTo(cameraPosition) < 0.6 && this.isPinching) {
+            let userdata = this.data;
+            if (userdata.fingerToHMDHeight) {
+                // check if index finger is on the HMD level
+                if (Math.abs(indexPosition.y - cameraPosition.y) > userdata.fingerToHMDHeight) {
+                    return stopDragging(el);
+                }
+            }
+
+            if (userdata.fingerToHMDDistance) {
+                // check index finger to HMD distance
+                if (indexPosition.distanceTo(cameraPosition) > userdata.fingerToHMDDistance) {
+                    return stopDragging(el);
+                }
+            }
+
+            if (this.isPinching) {
                 // get the "initial" angle
                 let z = indexPosition.z - this.camera.object3D.position.z;
                 let x = indexPosition.x - this.camera.object3D.position.x;
@@ -56,6 +78,7 @@ export const component = AFRAME.registerComponent("world-drag", {
 
                 if (prevAngle === undefined) {
                     prevAngle = angle
+                    el.emit("dragstart")
                     return;
                 }
 
@@ -73,7 +96,7 @@ export const component = AFRAME.registerComponent("world-drag", {
                 rig.object3D.position.add(point.negate()); // re-add the offset
                 rig.object3D.rotateOnAxis(UP, theta); // rotate the OBJECT
             } else {
-                prevAngle = undefined;
+                return stopDragging(el);
             }
         }
     })()
