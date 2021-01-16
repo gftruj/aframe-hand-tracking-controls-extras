@@ -4,7 +4,7 @@
 Yay or nay? Feel free to suggest improvements in the issues tab if you like these.
 ![Navigation](https://gftruj.github.io/hand.tracking.controls.extras/screens/navigation.gif)
 
-As of today these are more or less a PoC:
+As of today these are more or less a PoC. There is an example [here](https://gftruj.github.io/hand.tracking.controls.extras/examples/navigation.html) ([source](../examples/navigation.html))
 
 ### Teleport
 
