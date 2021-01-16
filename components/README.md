@@ -14,14 +14,33 @@ Pinch to confirm the location.
     <a-entity id="left-hand" hand-tracking-controls="hand: left" 
     hand-tracking-extras hand-teleport="rig: #rig; origin: a-camera">
 
-There are two attributes, the `rig` and the `origin` (the HMD).
+**Attributes**
+
+| Attribute        | Description   | Default |
+| ---------------- |:-------------:| -----:|
+| rig              | camera and hands rig         | |
+| origin           | teleport origin              | camera |
+| fadeSphereRadius | fadein-fadeout sphere radius | 0.1 |
+| fadeDuration     | fadein and fadeout duration  | 200 [ms] |
 
 ### World - drag
 Pinch in front of your face and drag, to rotate the rig.
 
     <a-entity id="right-hand" hand-tracking-controls="hand: right" hand-tracking-extras world-drag="rig: #rig"></a-entity>
 
-The only attribute is the rig selector;
+**Attributes**
+
+| Attribute        | Description   | Default |
+| ---------------- |:-------------:| -----:|
+| rig                 | camera and hands rig                                     |      |
+| fingerToHMDHeight   | ( index finger ).*y* - ( HMD ).*y* acceptable difference | 0.15 |
+| fingerToHMDDistance | How far can the finger be from the HMD                   | 0.6  |
+
+**Events**
+| Name          | Description   | 
+| ------------- |:-------------:| 
+| dragstart     | Emitted when the user started to drag the rig |
+| dragstop      | Emitted when the dragging has ended           |
 
 ### Important
 
