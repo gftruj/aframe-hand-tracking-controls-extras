@@ -7,42 +7,45 @@ Object.defineProperty(exports, "__esModule", {
 exports.JointObject = void 0;
 
 class JointObject {
-  constructor(id, parent) {
+  constructor(id, num, parent) {
     this.id = id;
+    this.num = num;
     this.parent = parent;
   }
 
   getPosition(_vector) {
-    return this.parent.getPosition(this.id, _vector);
+    return this.parent.getPosition(this.num, _vector);
   }
 
   getDirection(_vector) {
-    return this.parent.getDirection(this.id, _vector);
+    return this.parent.getDirection(this.num, _vector);
   }
 
   getNormal(_vector) {
-    return this.parent.getNormal(this.id, _vector);
+    return this.parent.getNormal(this.num, _vector);
   }
 
   getRawQuaternion(_quaternion) {
-    return this.parent.getPoseQuaternion(this.id, _quaternion);
+    return this.parent.getPoseQuaternion(this.num, _quaternion);
   }
 
   getQuaternion(_quaternion) {
-    return this.parent.getOrientedQuaternion(this.id, _quaternion);
+    return this.parent.getOrientedQuaternion(this.num, _quaternion);
   }
 
   getRadius() {
-    return this.parent.getRadius(this.id);
+    return this.parent.getRadius(this.num);
   }
 
   isValid() {
-    return this.parent.getValidity(this.id);
+    return this.parent.getValidity(this.num);
   }
   /*
       Gesture helper API
                           */
 
+
+  isCloserThan(other, distance) {}
 
   isTouchingJoint(other) {}
 
@@ -149,54 +152,56 @@ function HandData(_side) {
   var tmpDummy = new THREE.Object3D(); // initialize all joint objects
 
   function initPoses() {
+    let num = 0;
     this.joints = {
       // wrist
-      Wrist: new _JointObject.JointObject(XRHand.WRIST, this),
+      Wrist: new _JointObject.JointObject("wrist", num++, this),
       // thumb
-      T_Metacarpal: new _JointObject.JointObject(XRHand.THUMB_METACARPAL, this),
-      T_Proximal: new _JointObject.JointObject(XRHand.THUMB_PHALANX_PROXIMAL, this),
-      T_Distal: new _JointObject.JointObject(XRHand.THUMB_PHALANX_DISTAL, this),
-      T_Tip: new _JointObject.JointObject(XRHand.THUMB_PHALANX_TIP, this),
+      T_Metacarpal: new _JointObject.JointObject("thumb-metacarpal", num++, this),
+      T_Proximal: new _JointObject.JointObject("thumb-phalanx-proximal", num++, this),
+      T_Distal: new _JointObject.JointObject("thumb-phalanx-distal", num++, this),
+      T_Tip: new _JointObject.JointObject("thumb-tip", num++, this),
       // index
-      I_Metacarpal: new _JointObject.JointObject(XRHand.INDEX_METACARPAL, this),
-      I_Proximal: new _JointObject.JointObject(XRHand.INDEX_PHALANX_PROXIMAL, this),
-      I_Intermediate: new _JointObject.JointObject(XRHand.INDEX_PHALANX_INTERMEDIATE, this),
-      I_Distal: new _JointObject.JointObject(XRHand.INDEX_PHALANX_DISTAL, this),
-      I_Tip: new _JointObject.JointObject(XRHand.INDEX_PHALANX_TIP, this),
+      I_Metacarpal: new _JointObject.JointObject("index-finger-metacarpal", num++, this),
+      I_Proximal: new _JointObject.JointObject("index-finger-phalanx-proximal", num++, this),
+      I_Intermediate: new _JointObject.JointObject("index-finger-phalanx-intermediate", num++, this),
+      I_Distal: new _JointObject.JointObject("index-finger-phalanx-distal", num++, this),
+      I_Tip: new _JointObject.JointObject("index-finger-tip", num++, this),
       // middle
-      M_Metacarpal: new _JointObject.JointObject(XRHand.MIDDLE_METACARPAL, this),
-      M_Proximal: new _JointObject.JointObject(XRHand.MIDDLE_PHALANX_PROXIMAL, this),
-      M_Intermediate: new _JointObject.JointObject(XRHand.MIDDLE_PHALANX_INTERMEDIATE, this),
-      M_Distal: new _JointObject.JointObject(XRHand.MIDDLE_PHALANX_DISTAL, this),
-      M_Tip: new _JointObject.JointObject(XRHand.MIDDLE_PHALANX_TIP, this),
+      M_Metacarpal: new _JointObject.JointObject("middle-finger-metacarpal", num++, this),
+      M_Proximal: new _JointObject.JointObject("middle-finger-phalanx-proximal", num++, this),
+      M_Intermediate: new _JointObject.JointObject("middle-finger-phalanx-intermediate", num++, this),
+      M_Distal: new _JointObject.JointObject("middle-finger-phalanx-distal", num++, this),
+      M_Tip: new _JointObject.JointObject("middle-finger-tip", num++, this),
       // ring
-      R_Metacarpal: new _JointObject.JointObject(XRHand.RING_METACARPAL, this),
-      R_Proximal: new _JointObject.JointObject(XRHand.RING_PHALANX_PROXIMAL, this),
-      R_Intermediate: new _JointObject.JointObject(XRHand.RING_PHALANX_INTERMEDIATE, this),
-      R_Distal: new _JointObject.JointObject(XRHand.RING_PHALANX_DISTAL, this),
-      R_Tip: new _JointObject.JointObject(XRHand.RING_PHALANX_TIP, this),
+      R_Metacarpal: new _JointObject.JointObject("ring-finger-metacarpal", num++, this),
+      R_Proximal: new _JointObject.JointObject("ring-finger-phalanx-proximal", num++, this),
+      R_Intermediate: new _JointObject.JointObject("ring-finger-phalanx-intermediate", num++, this),
+      R_Distal: new _JointObject.JointObject("ring-finger-phalanx-distal", num++, this),
+      R_Tip: new _JointObject.JointObject("ring-finger-tip", num++, this),
       // little
-      L_Metacarpal: new _JointObject.JointObject(XRHand.LITTLE_METACARPAL, this),
-      L_Proximal: new _JointObject.JointObject(XRHand.LITTLE_PHALANX_PROXIMAL, this),
-      L_Intermediate: new _JointObject.JointObject(XRHand.LITTLE_PHALANX_INTERMEDIATE, this),
-      L_Distal: new _JointObject.JointObject(XRHand.LITTLE_PHALANX_DISTAL, this),
-      L_Tip: new _JointObject.JointObject(XRHand.LITTLE_PHALANX_TIP, this)
+      L_Metacarpal: new _JointObject.JointObject("pinky-finger-metacarpal", num++, this),
+      L_Proximal: new _JointObject.JointObject("pinky-finger-phalanx-proximal", num++, this),
+      L_Intermediate: new _JointObject.JointObject("pinky-finger-phalanx-intermediate", num++, this),
+      L_Distal: new _JointObject.JointObject("pinky-finger-phalanx-distal", num++, this),
+      L_Tip: new _JointObject.JointObject("pinky-finger-tip", num++, this)
     };
   }
 
   initPoses.call(this); // iterate through the poses and update the arrays
 
   this.updateData = (controller, frame, referenceSpace) => {
-    for (let joint in this.joints) {
+    for (let jointRef in this.joints) {
       // the XRHand joints can be nulls
-      if (!controller.hand[this.joints[joint].id]) continue; // grab the pose and gather data
+      const joint = controller.hand.get(this.joints[jointRef].id);
+      if (!joint) continue; // grab the pose and gather data
 
-      var rawPose = frame.getJointPose(controller.hand[this.joints[joint].id], referenceSpace);
+      var rawPose = frame.getJointPose(joint, referenceSpace);
 
       if (rawPose) {
-        setDataFromPose(this.joints[joint].id, rawPose);
+        setDataFromPose(this.joints[jointRef].num, rawPose);
       } else {
-        setValidityById(this.joints[joint].id, false);
+        setValidityById(this.joints[jointRef].num, false);
       }
     }
   };
