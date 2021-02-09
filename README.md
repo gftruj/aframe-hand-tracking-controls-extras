@@ -1,5 +1,10 @@
 # hand-tracking-controls-extras
 
+### Disclaimer
+
+Due to recent WebXR changes [issue here](https://github.com/gftruj/aframe-hand-tracking-controls-extras/issues/2#issuecomment-775546838) the component has some quickfixes, and the examples need revisiting ( probably the code as well :P ).
+
+I've posted an updated example on [glitch](https://gftruj-handstuff.glitch.me/). I'll try to make sure any other example works as well.
 
 Simplified Joints API + utility helpers like a teleporter and world drag:
 
