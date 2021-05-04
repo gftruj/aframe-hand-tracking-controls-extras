@@ -23,7 +23,7 @@ Teleport + world dragging. Check it out [here](https://gftruj.github.io/hand.tra
 - Cubemaps by Emil Persson, aka Humus. http://www.humus.name.
 
 ### Battle-hands
-WIP. The hands API is so unstable, I'll probably leave it this way for now. Check it out [here](https://gftruj.github.io/hand.tracking.controls.extras/examples/battle-hands.html).
+WIP. The hands API is so unstable, I'll probably leave it this way for now. Check it out [here](https://gftruj.github.io/hand.tracking.controls.extras/examples/battle-hands.html)([source](battle-hands.html)).
 
 Models: 
 <p>Crossbow by <a
