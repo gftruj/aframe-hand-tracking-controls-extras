@@ -1,0 +1,355 @@
+<script src="https://raw.githack.com/aframevr/aframe/master/dist/aframe-master.js"></script>
+<script
+    src="https://gftruj.github.io/hand.tracking.controls.extras/dist/aframe-hand-tracking-controls-extras.js"></script>
+<script>
+    AFRAME.registerComponent('model-relative-opacity', {
+        schema: { opacityFactor: { default: 0.5 } },
+        init: function () {
+            this.nodeMap = {}
+            this.prepareMap.bind(this)
+            this.traverseMesh.bind(this)
+
+            this.el.addEventListener('model-loaded', e => {
+                setTimeout(e => {
+                    this.prepareMap()
+                    this.update()
+                }, 1000);
+            });
+        },
+        prepareMap: function () {
+            this.traverseMesh(node => {
+                this.nodeMap[node.uuid] = node.material.opacity
+            })
+        },
+        update: function () {
+            this.traverseMesh(node => {
+                node.material.opacity = this.nodeMap[node.uuid] * this.data.opacityFactor
+                node.material.transparent = node.material.opacity < 1.0;
+                node.material.needsUpdate = true;
+            })
+        },
+        remove: function () {
+            this.traverseMesh(node => {
+                node.material.opacity = this.nodeMap[node.uuid]
+                node.material.transparent = node.material.opacity < 1.0;
+                node.material.needsUpdate = true;
+            })
+        },
+        traverseMesh: function (func) {
+            var mesh = this.el.getObject3D('mesh') || this.el.object3D;
+            var data = this.data;
+            if (!mesh) { return; }
+            mesh.traverse(node => {
+                if (node.isMesh) {
+                    func(node)
+                }
+            });
+        }
+    });
+
+    AFRAME.registerComponent("sword", {
+        init: function () {
+            // Instantiate a loader
+            const loader = new THREE.GLTFLoader();
+            const root = this.el.object3D;
+            const self = this;
+
+            // Load a glTF resource
+            loader.load(
+                // resource URL
+                './assets/models/nano/nano.glb',
+                // called when the resource is loaded
+                function (gltf) {
+
+                    gltf.scene.scale.set(0.015, 0.015, 0.015)
+                    gltf.scene.rotation.y -= Math.PI / 2
+                    root.add(gltf.scene);
+
+                    gltf.animations; // Array<THREE.AnimationClip>
+                    gltf.scene; // THREE.Group
+
+                    self.mixer = new THREE.AnimationMixer(gltf.scene);
+                    self.model = gltf.scene;
+                    self.animations = gltf.animations;
+
+                    self.mixer.addEventListener('finished', (e) => {
+
+                    });
+                    self.el.emit("model-loaded")
+                }
+            );
+
+            this.swordRig = document.getElementById("sword-rig");
+            document.getElementById("rightHand").addEventListener("hand-tracking-extras-ready", evt => {
+                this.joints = evt.detail.data.joints;
+            })
+
+            this.playAnimation = (newAction, oldAction) => {
+                this.mixer.setTime(0);
+                newAction.paused = false; // unclamp
+                newAction.enabled = true
+                oldAction.enabled = false
+                newAction.play();
+            }
+            this.el.addEventListener("sheathe", e => {
+                this.playAnimation(this.actions.sheathe, this.actions.unsheathe);
+            })
+            this.el.addEventListener("unsheathe", e => {
+                this.playAnimation(this.actions.unsheathe, this.actions.sheathe);
+            })
+        },
+        prepareAnims: function () {
+            var unsheathe = THREE.AnimationUtils.subclip(this.animations[0], 'unsheathe', 0, 50)
+            var sheathe = THREE.AnimationUtils.subclip(this.animations[0], 'sheathe', 80, 125)
+
+            var addClip = (clip) => {
+                const action = this.mixer.clipAction(clip, this.model);
+                action.setDuration(0)
+                action.setEffectiveTimeScale(4);
+                action.loop = THREE.LoopOnce
+                action.clampWhenFinished = true;
+                action.enabled = false
+                return action;
+            }
+
+            this.actions = {}
+            this.actions.sheathe = addClip(sheathe);
+            this.actions.unsheathe = addClip(unsheathe);
+            this.ready = true
+        },
+        updateMixer: function (dt) {
+            if (!this.mixer) return;
+            if (!this.ready) this.prepareAnims();
+            this.mixer.update(dt)
+        },
+        tick: (function () {
+            const wristPosition = new THREE.Vector3();
+            const wristQuat = new THREE.Quaternion();
+            const M_MetacarpalQuat = new THREE.Quaternion();
+            const M_DistalQuat = new THREE.Quaternion();
+
+            return function (t, dt) {
+                // handle animations
+                this.updateMixer(dt / 1000)
+
+                // hand tracking
+                if (!this.swordRig) return;
+                if (!this.joints) return;
+
+                // track the wrist
+                const wrist = this.joints.Wrist;
+                wrist.getPosition(wristPosition);
+                wrist.getRawQuaternion(wristQuat);
+                this.swordRig.object3D.position.lerp(wristPosition, 0.1);
+                this.swordRig.object3D.quaternion.slerp(wristQuat, 0.1);
+
+                // show / hide
+                if (wrist.isValid() && !this.handValid) {
+                    this.el.emit("show")
+                    this.handValid = true;
+                } else if (!wrist.isValid() && this.handValid) {
+                    this.el.emit("hide");
+                    this.handValid = false;
+                }
+
+                const M_Metacarpal = this.joints.M_Metacarpal;
+                const M_Distal = this.joints.M_Distal;
+                M_Metacarpal.getRawQuaternion(M_MetacarpalQuat);
+                M_Distal.getRawQuaternion(M_DistalQuat);
+
+                // Middle finger bent or not
+                if (M_DistalQuat.dot(M_MetacarpalQuat) > 0.925 && !this.unsheathed) {
+                    this.el.emit("unsheathe")
+                    this.unsheathed = true;
+                } else if (M_DistalQuat.dot(M_MetacarpalQuat) < 0.925 && this.unsheathed) {
+                    this.el.emit("sheathe");
+                    this.unsheathed = false;
+                }
+            }
+        })()
+    })
+
+    AFRAME.registerComponent("left-hand-weapons", {
+        init: function () {
+            document.getElementById("leftHand").addEventListener("hand-tracking-extras-ready", evt => {
+                this.joints = evt.detail.data.joints;
+            })
+            this.crossbow = {
+                name: "crossbow",
+                rig: document.getElementById("crossbow-rig"),
+                model: document.getElementById("crossbow"),
+                visible: false
+            }
+            this.mace = {
+                name: "mace",
+                rig: document.getElementById("mace-rig"),
+                model: document.getElementById("mace"),
+                visible: false
+            }
+
+            this.hand = document.getElementById("leftHand");
+        },
+        tick: (function () {
+            const wristPos = new THREE.Vector3();
+            const wristQ = new THREE.Quaternion();
+
+            // crossbow
+            const T_DistalQ = new THREE.Quaternion();
+            const I_DistalQ = new THREE.Quaternion();
+            const I_ProximalQ = new THREE.Quaternion();
+            const M_DistalQ = new THREE.Quaternion();
+            const M_ProximalQ = new THREE.Quaternion();
+
+            // mace
+            const I_TipPos = new THREE.Vector3();
+            const I_ProximalPos = new THREE.Vector3();
+
+            function showObj(obj) {
+                if (obj.visible) return;
+                obj.model.emit("show");
+                obj.visible = true;
+            }
+            function hideObj(obj) {
+                if (!obj.visible) return;
+                obj.model.emit("hide");
+                obj.visible = false;
+            }
+
+            return function () {
+                if (!this.joints) return;
+                const wrist = this.joints.Wrist
+                const I_Distal = this.joints.I_Distal;
+                const I_Proximal = this.joints.I_Proximal;
+                const M_Distal = this.joints.M_Distal;
+                const M_Proximal = this.joints.M_Proximal;
+
+                wrist.getPosition(wristPos);
+                wrist.getRawQuaternion(wristQ);
+
+                // rig updates
+                this.mace.rig.object3D.position.lerp(wristPos, 0.1)
+                this.mace.rig.object3D.quaternion.slerp(wristQ, 0.1)
+
+                this.crossbow.rig.object3D.position.lerp(wristPos, 0.1)
+                this.crossbow.rig.object3D.quaternion.slerp(wristQ, 0.1)
+
+                if (!wrist.isValid()) {
+                    hideObj(this.mace);
+                    hideObj(this.crossbow)
+                    return;
+                }
+
+                // lol the poses are kinda "faked" with orientations
+
+                I_Proximal.getRawQuaternion(I_ProximalQ)
+                I_Distal.getRawQuaternion(I_DistalQ);
+                M_Proximal.getRawQuaternion(M_ProximalQ)
+                M_Distal.getRawQuaternion(M_DistalQ);
+
+
+                if (M_DistalQ.dot(M_ProximalQ) > 0.2) {
+                    this.hand.object3D.visible = true;
+                    hideObj(this.mace);
+                    hideObj(this.crossbow);
+                    return
+                }
+
+                var itemVisible = false;
+
+                // mace - index bent
+                if (I_DistalQ.dot(I_ProximalQ) < 0.2 && M_DistalQ.dot(M_ProximalQ) < 0.2) {
+                    showObj(this.mace);
+                    itemVisible = true;
+                } else {
+                    hideObj(this.mace);
+                    itemVisible = false
+                }
+
+                // "pistol" - ignore thumb for it may be needed to "shoot"
+                // index straight, the rest bent
+                if (!itemVisible) {
+                    if (I_DistalQ.dot(I_ProximalQ) > 0.975 && M_DistalQ.dot(M_ProximalQ) < 0.5) {
+                        showObj(this.crossbow);
+                        itemVisible = true;
+                    } else {
+                        hideObj(this.crossbow);
+                        itemVisible = false
+                    }
+                }
+
+                this.hand.object3D.visible = !itemVisible;
+
+            }
+        })()
+    })
+</script>
+<style>
+    #info {
+        position: fixed;
+        z-index: 1000;
+        text-align: center;
+        width: 100%;
+        margin: 0 auto;
+    }
+</style>
+<div id="info">
+    <h3>BATTLE HANDS</h3>
+    <p>Crossbow by <a
+            href="https://sketchfab.com/3d-models/medieval-crossbow-3a2ea0c90d1b445aa00053e97f888a9f">HMdesign</a> <a
+            href="https://creativecommons.org/licenses/by/4.0/">(CC)</a><br>
+        Mace by <a href="https://sketchfab.com/3d-models/simple-steel-mace-c5b39a9c83c840ad80666ab6c26f65de">MMKH</a> <a
+            href="https://creativecommons.org/licenses/by/4.0/">(CC)</a><br>
+        Nano Sword by <a href="https://sketchfab.com/3d-models/nano-sword-5f6f184fff9a4f99bd3c4123d3427b00">Green
+            Eyesman</a> <a href="https://creativecommons.org/licenses/by/4.0/">(CC)</a><br>
+    </p>
+</div>
+<a-scene>
+    <a-assets>
+        <a-asset-item id="crossbow-model" src="assets/models/crossbow/scene.gltf"></a-asset-item>
+        <a-asset-item id="mace-model" src="assets/models/mace/scene.gltf"></a-asset-item>
+    </a-assets>
+    <!-- SCENE -->
+    <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
+    <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <a-sky color="#5a5a5a"></a-sky>
+
+    <a-text color="black" position="0 1 -2"></a-text>
+
+    <a-entity id="leftHand" hand-tracking-controls="hand: left;" hand-tracking-extras left-hand-weapons
+        model-relative-opacity="opacityFactor: 0.5"
+        animation__show='property: model-relative-opacity.opacityFactor;from: 0; to: 0.75; dur: 250; startEvents: show'
+        animation__hide='property: model-relative-opacity.opacityFactor;from: 0.75; to: 0; dur: 250; startEvents: hide'>
+    </a-entity>
+    <a-entity id="rightHand" hand-tracking-controls="hand: right;" hand-tracking-extras
+        model-relative-opacity="opacityFactor: 0.1">
+    </a-entity>
+
+
+    <!-- weapon rigs -->
+    <a-entity id="sword-rig">
+        <a-entity position="-0.065 0.05 0.15">
+            <a-entity sword position="0.07 0 -0.5" rotation="0 0 90" model-relative-opacity="opacityFactor: 0"
+                animation__show='property: model-relative-opacity.opacityFactor;from: 0; to: 1; dur: 250; startEvents: show'
+                animation__hide='property: model-relative-opacity.opacityFactor;from: 1; to: 0; dur: 250; startEvents: hide'>
+                ></a-entity>
+        </a-entity>
+    </a-entity>
+    <a-entity id="crossbow-rig">
+        <a-entity scale="0.0005 0.0005 0.0005" rotation="0 10 -90" position="0 0 -0.2">
+            <a-entity id="crossbow" gltf-model="#crossbow-model" model-relative-opacity="opacityFactor: 0"
+                animation__show='property: model-relative-opacity.opacityFactor;from: 0; to: 1; dur: 250; startEvents: show'
+                animation__hide='property: model-relative-opacity.opacityFactor;from: 1; to: 0; dur: 250; startEvents: hide'>
+            </a-entity>
+        </a-entity>
+    </a-entity>
+    <a-entity id="mace-rig">
+        <a-entity scale="0.025 0.025 0.025" position="0.15 0 -0.1" rotation="0 0 -90">
+            <a-entity id="mace" gltf-model="#mace-model" model-relative-opacity="opacityFactor: 0"
+                animation__show='property: model-relative-opacity.opacityFactor;from: 0; to: 1; dur: 250; startEvents: show'
+                animation__hide='property: model-relative-opacity.opacityFactor;from: 1; to: 0; dur: 250; startEvents: hide'>
+            </a-entity>
+        </a-entity>
+    </a-entity>
+</a-scene>
