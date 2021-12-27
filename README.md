@@ -1,10 +1,18 @@
 # hand-tracking-controls-extras
 
-### Disclaimer
+### Big Disclaimer
 
 Due to recent WebXR changes ([issue here](https://github.com/gftruj/aframe-hand-tracking-controls-extras/issues/2#issuecomment-775546838)) the component has some quickfixes, but may be unstable.
 
 I've posted an updated example on [glitch](https://gftruj-handstuff.glitch.me/). I'll try to make sure any other example works as well.
+
+### Little disclaimer
+
+When I rushed at `a-frame`s finger tracking I wasn't aware, that I'm kinda reinventing the wheel.
+A great place with multiple examples is [Marlon Lückerts repository](https://github.com/marlon360/webxr-handtracking).
+
+On the other hand, I've learned a lot doing this, and am fully willing to continue :)
+To all starring, and forking people - thank You! Any ideas are more then welcome ( i.e. in form of an issue )
 
 ----
 
@@ -104,13 +112,6 @@ L_Proximal | XRHand.LITTLE_PHALANX_PROXIMAL (21)
 L_Intermediate | XRHand.LITTLE_PHALANX_INTERMEDIATE (22)
 L_Distal | XRHand.LITTLE_PHALANX_DISTAL (23)
 L_Tip | XRHand.LITTLE_PHALANX_TIP (24)
-
-### Little disclaimer
-
-When I rushed at `a-frame`s finger tracking I wasn't aware, that I'm kinda reinventing the wheel.
-A great place with multiple examples is [Marlon Lückerts repository](https://github.com/marlon360/webxr-handtracking).
-
-On the other hand, I've learned a lot doing this, and am fully willing to continue :)
 
 ### Roadmap - wishful thinking
 
