@@ -12,16 +12,15 @@ AFRAME.registerComponent("obelisk", {
         top.setAttribute("position", "0 1.25 0")
         top.setAttribute("look-at",)
 
-
         /* Having trouble with removing vertices with a spherebuffergeometry...??? */
         let geo = new THREE.SphereGeometry(1, 32, 32);
-        let extSphere = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geo),
+        let extSphere = new THREE.Mesh(geo,
             new THREE.MeshStandardMaterial({ color: new THREE.Color(this.data.color) }))
-        geo.dispose();
+        //geo.dispose();
         extSphere.rotation.set(-Math.PI / 2, 0, 0)
         top.object3D.add(extSphere)
 
-        var self = this;
+        this.theta = Math.PI
 
         let path = this.data.cubemap;
         let texture = new THREE.CubeTextureLoader().
@@ -30,14 +29,10 @@ AFRAME.registerComponent("obelisk", {
                 '/posx.jpg', '/negx.jpg',
                 '/posy.jpg', '/negy.jpg',
                 '/posz.jpg', '/negz.jpg'
-            ], function loaded() {
-                let scene = self.el.sceneEl
-                scene.renderer.compile(scene.object3D, scene.camera) // precompiling should help, but I didn't feel a difference
-            });
-        texture.format = THREE.RGBFormat;
+            ]);
         texture.mapping = THREE.CubeRefractionMapping
 
-        let wonderCube = new THREE.Mesh(new THREE.SphereBufferGeometry(1, 32, 32),
+        let wonderCube = new THREE.Mesh(this.getSphere(this.theta),
             new THREE.MeshBasicMaterial({ envMap: texture, side: THREE.BackSide }));
         wonderCube.frustumCulled = false;                           // render from the beginning to prevent freezing
         wonderCube.position.y = top.object3D.position.y
@@ -59,8 +54,22 @@ AFRAME.registerComponent("obelisk", {
         // expose
         this.top = top;
         this.extSphere = extSphere;
+
+        extSphere.geometry.attributes.position.count = 100
         this.wonderCube = wonderCube
         this.faceCount = this.extSphere.geometry.attributes.position.count
+    },
+    getSphere(theta) {
+        return new THREE.SphereGeometry(1, 32, 32, 0, Math.PI * 2, 0, theta)
+    },
+    clampTheta(theta) {
+        return Math.min(Math.max(theta, 0), Math.PI)
+    },
+    decreaseTheta(theta) {
+        if (theta > 0) return this.clampTheta(theta - 0.02);
+    },
+    increaseTheta(theta) {
+        if (theta < Math.PI) return this.clampTheta(theta + 0.02)
     },
     tick: (function () {
 
@@ -69,7 +78,6 @@ AFRAME.registerComponent("obelisk", {
 
         // this is a freeze-prevention-workaround. renderer.compile did not help :(
         let ticks = 0;
-
         return function (t, dt) {
 
             // keep the cube animated
@@ -78,31 +86,25 @@ AFRAME.registerComponent("obelisk", {
                 this.wonderCube.frustumCulled = true;           // back to normal after a few ticks. This is purely workaroundish
 
             // keep the sphere oriented 
-                  
-            camPos.setFromMatrixPosition( this.el.sceneEl.camera.el.object3D.matrixWorld ); // why getWorldPosition isn't working lol
+            camPos.setFromMatrixPosition(this.el.sceneEl.camera.el.object3D.matrixWorld); // why getWorldPosition isn't working lol
             this.top.object3D.lookAt(camPos)
 
             // show / hide
             let mesh = this.extSphere
             mesh.getWorldPosition(objPos)
-            let faces = mesh.geometry.attributes.position.count
+
+            var oldGeo = null;
             if (camPos.distanceTo(objPos) < 2.5) {
-                if (faces <= 0) return;
-
-                let removecount = Math.floor(Math.random() * 100);
-                if (removecount > faces)
-                    removecount = faces;
-
-                mesh.geometry.attributes.position.count -= removecount;
-                mesh.geometry.attributes.position.needsUpdate = true
-            } else if (faces < this.faceCount) {
-                let missingcount = this.faceCount - faces;
-                let addcount = Math.ceil(Math.random() * missingcount) / 10
-                if (addcount > missingcount)
-                    addcount = missingcount;
-
-                mesh.geometry.attributes.position.count += addcount;
-                mesh.geometry.attributes.position.needsUpdate = true
+                if (this.theta <= 0) return;
+                this.theta = this.decreaseTheta(this.theta);
+                oldGeo = this.extSphere.geometry;
+            } else if (this.theta < Math.PI) {
+                this.theta = this.increaseTheta(this.theta);
+                oldGeo = this.extSphere.geometry;
+            }
+            if (oldGeo) {
+                mesh.geometry = this.getSphere(this.theta);
+                oldGeo.dispose();
             }
         }
     })()

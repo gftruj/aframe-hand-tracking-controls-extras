@@ -4,7 +4,6 @@ export default AFRAME.registerComponent("hand-tracking-extras", {
     init: function () {
         this.el.addEventListener("enter-vr", this.play);
         this.el.addEventListener("exit-vr", this.pause);
-        this.side = this.el.getAttribute("hand-tracking-controls").hand;
     },
     tick: (function() {
         return function() {
@@ -20,7 +19,7 @@ export default AFRAME.registerComponent("hand-tracking-extras", {
         if (!controller || !frame || !referenceSpace) { return; }
 
         if (!this.HandData) {
-            this.HandData = new HandData(this.side);
+            this.HandData = new HandData();
             this.el.emit("hand-tracking-extras-ready", {data: this.HandData})
         }
 
@@ -37,8 +36,12 @@ export default AFRAME.registerComponent("hand-tracking-extras", {
         this.el.removeEventListener("enter-vr", this.play);
         this.el.removeEventListener("exit-vr", this.pause)
     },
-    getJoints() {
+    getRawJoints() {
         if (this.HandData) return this.HandData.joints;
+        return null;
+    },
+    getJoints() {
+        if (this.HandData) return this.HandData.jointAPI;
         return null;
     }
 })

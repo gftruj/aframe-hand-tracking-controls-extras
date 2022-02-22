@@ -1,6 +1,6 @@
 import { JointObject } from './JointObject';
 
-export function HandData(_side) {
+export function HandData() {
     // float32 array helpers
     const Quaternion_Size = 4;
     const Vector_Size = 3;
@@ -18,44 +18,74 @@ export function HandData(_side) {
     var tmpDummy = new THREE.Object3D();
 
     // initialize all joint objects
-    function initPoses() {
-        let num = 0;
-        this.joints = {
-            // wrist
-            Wrist: new JointObject("wrist", num++, this),
-            // thumb
-            T_Metacarpal: new JointObject("thumb-metacarpal", num++, this),
-            T_Proximal: new JointObject("thumb-phalanx-proximal", num++, this),
-            T_Distal: new JointObject("thumb-phalanx-distal", num++, this),
-            T_Tip: new JointObject("thumb-tip", num++, this),
-            // index
-            I_Metacarpal: new JointObject("index-finger-metacarpal", num++, this),
-            I_Proximal: new JointObject("index-finger-phalanx-proximal", num++, this),
-            I_Intermediate: new JointObject("index-finger-phalanx-intermediate", num++, this),
-            I_Distal: new JointObject("index-finger-phalanx-distal", num++, this),
-            I_Tip: new JointObject("index-finger-tip", num++, this),
-            // middle
-            M_Metacarpal: new JointObject("middle-finger-metacarpal", num++, this),
-            M_Proximal: new JointObject("middle-finger-phalanx-proximal", num++, this),
-            M_Intermediate: new JointObject("middle-finger-phalanx-intermediate", num++, this),
-            M_Distal: new JointObject("middle-finger-phalanx-distal", num++, this),
-            M_Tip: new JointObject("middle-finger-tip", num++, this),
-            // ring
-            R_Metacarpal: new JointObject("ring-finger-metacarpal", num++, this),
-            R_Proximal: new JointObject("ring-finger-phalanx-proximal", num++, this),
-            R_Intermediate: new JointObject("ring-finger-phalanx-intermediate", num++, this),
-            R_Distal: new JointObject("ring-finger-phalanx-distal", num++, this),
-            R_Tip: new JointObject("ring-finger-tip", num++, this),
-            // little
-            L_Metacarpal: new JointObject("pinky-finger-metacarpal", num++, this),
-            L_Proximal: new JointObject("pinky-finger-phalanx-proximal", num++, this),
-            L_Intermediate: new JointObject("pinky-finger-phalanx-intermediate", num++, this),
-            L_Distal: new JointObject("pinky-finger-phalanx-distal", num++, this),
-            L_Tip: new JointObject("pinky-finger-tip", num++, this)
-        }
+    let num = 0;
+    const joints = {
+        // wrist
+        Wrist: new JointObject("wrist", num++, this),
+        // thumb
+        T_Metacarpal: new JointObject("thumb-metacarpal", num++, this),
+        T_Proximal: new JointObject("thumb-phalanx-proximal", num++, this),
+        T_Distal: new JointObject("thumb-phalanx-distal", num++, this),
+        T_Tip: new JointObject("thumb-tip", num++, this),
+        // index
+        I_Metacarpal: new JointObject("index-finger-metacarpal", num++, this),
+        I_Proximal: new JointObject("index-finger-phalanx-proximal", num++, this),
+        I_Intermediate: new JointObject("index-finger-phalanx-intermediate", num++, this),
+        I_Distal: new JointObject("index-finger-phalanx-distal", num++, this),
+        I_Tip: new JointObject("index-finger-tip", num++, this),
+        // middle
+        M_Metacarpal: new JointObject("middle-finger-metacarpal", num++, this),
+        M_Proximal: new JointObject("middle-finger-phalanx-proximal", num++, this),
+        M_Intermediate: new JointObject("middle-finger-phalanx-intermediate", num++, this),
+        M_Distal: new JointObject("middle-finger-phalanx-distal", num++, this),
+        M_Tip: new JointObject("middle-finger-tip", num++, this),
+        // ring
+        R_Metacarpal: new JointObject("ring-finger-metacarpal", num++, this),
+        R_Proximal: new JointObject("ring-finger-phalanx-proximal", num++, this),
+        R_Intermediate: new JointObject("ring-finger-phalanx-intermediate", num++, this),
+        R_Distal: new JointObject("ring-finger-phalanx-distal", num++, this),
+        R_Tip: new JointObject("ring-finger-tip", num++, this),
+        // little
+        L_Metacarpal: new JointObject("pinky-finger-metacarpal", num++, this),
+        L_Proximal: new JointObject("pinky-finger-phalanx-proximal", num++, this),
+        L_Intermediate: new JointObject("pinky-finger-phalanx-intermediate", num++, this),
+        L_Distal: new JointObject("pinky-finger-phalanx-distal", num++, this),
+        L_Tip: new JointObject("pinky-finger-tip", num++, this),
     }
-    initPoses.call(this);
+    this.joints = joints;
+    this.jointAPI = {
+        getWrist: () => joints.Wrist,
+        
+        getThumbMetacarpal: () => joints.T_Metacarpal,
+        getThumbProximal: () => joints.T_Proximal,
+        getThumbDistal: () => joints.T_Distal,
+        getThumbTip: () => joints.T_Tip,
 
+        getIndexMetacarpal: () => joints.I_Metacarpal,
+        getIndexProximal: () => joints.I_Proximal,
+        getIndexIntermediat: () => joints.I_Intermediate,        
+        getIndexDistal: () => joints.I_Distal,
+        getIndexTip: () => joints.I_Tip,
+
+        getMiddleMetacarpal: () => joints.M_Metacarpal,
+        getMiddleProximal: () => joints.M_Proximal,
+        getMiddleIntermediat: () => joints.M_Intermediate,        
+        getMiddleDistal: () => joints.M_Distal,
+        getMiddleTip: () => joints.M_Tip,
+
+        getRingMetacarpal: () => joints.R_Metacarpal,
+        getRingProximal: () => joints.R_Proximal,
+        getRingIntermediat: () => joints.R_Intermediate,        
+        getRingDistal: () => joints.R_Distal,
+        getRingTip: () => joints.R_Tip,
+
+        getLittleMetacarpal: () => joints.L_Metacarpal,
+        getLittleProximal: () => joints.L_Proximal,
+        getLittleIntermediat: () => joints.L_Intermediate,        
+        getLittleDistal: () => joints.L_Distal,
+        getLittleTip: () => joints.L_Tip,
+    }
+    
     // iterate through the poses and update the arrays
     this.updateData = (controller, frame, referenceSpace) => {
 
@@ -90,22 +120,15 @@ export function HandData(_side) {
         setValidityById(id, true);
     }
 
-
-    // hand orientation helpers
-    const side = _side;
-    this.getSide = () => side;
     // "normal" is actually the "inside" 
     const normalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
-    const rightHandOrientationBias = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI/2, 0));
-    const leftHandOrientationBias = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI, -Math.PI/2, 0));
 
-     function toForward(vector) {
+    function toForward(vector) {
         return vector.set(0, 0, -1);
     }
-    
+
     this.getOrientedQuaternion = (id, _quaternion) => {
-        let orientation = side === "left" ? leftHandOrientationBias : rightHandOrientationBias;
-        return this.getPoseQuaternion(id, _quaternion).multiply(orientation);
+        return this.getPoseQuaternion(id, _quaternion);
     }
 
     this.getDirection = (id, _vector) => {
@@ -120,7 +143,7 @@ export function HandData(_side) {
 
         tmpDummy.quaternion.copy(tmpQuaternion)
         tmpDummy.getWorldDirection(vector);
-        return vector;  
+        return vector;
     }
 
     /* Pose Setters and getters */
@@ -150,5 +173,4 @@ export function HandData(_side) {
     }
     this.getRadius = (id) => radius_array[id];
     this.getValidity = (id) => validity_array[id];
-
 } 

@@ -1,8 +1,8 @@
-export const component = AFRAME.registerComponent("world-drag", {
+export const component = AFRAME.registerComponent("drag-rotate", {
     schema: {
         rig: { type: "selector" },
-        fingerToHMDHeight: {default: 0.15},
-        fingerToHMDDistance: {default: 0.6}
+        fingerToHMDHeight: { default: 0.15 },
+        fingerToHMDDistance: { default: 0.6 }
     },
     init: function () {
         this.isPinching = false;

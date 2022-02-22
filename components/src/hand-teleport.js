@@ -127,7 +127,6 @@ export const component = AFRAME.registerComponent("hand-teleport", {
 
       // gesture helpers
       wrist.getNormal(normal);
-
       // react only to "palm" up
       if (normal.y < 0.7) {
         if (this.tpUp) {

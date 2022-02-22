@@ -1,7 +1,196 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-require ("./src/world-drag")
+require ("./src/drag-rotate")
+require ("./src/drag-move")
 require ("./src/hand-teleport")
-},{"./src/hand-teleport":3,"./src/world-drag":7}],2:[function(require,module,exports){
+},{"./src/drag-move":2,"./src/drag-rotate":3,"./src/hand-teleport":5}],2:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.component = void 0;
+const component = AFRAME.registerComponent("drag-move", {
+  schema: {
+    rig: {
+      type: "selector"
+    },
+    speed: {
+      default: 1
+    }
+  },
+  init: function () {
+    this.isPinching = false;
+    this.pinchUp = this.setPinch.bind(this, true);
+    this.pinchDown = this.setPinch.bind(this, false);
+    this.handExtrasReady = this.handExtrasReady.bind(this);
+    this.el.addEventListener("pinchstarted", this.pinchUp);
+    this.el.addEventListener("pinchmoved", this.pinchUp);
+    this.el.addEventListener("pinchended", this.pinchDown);
+    this.el.addEventListener("hand-tracking-extras-ready", this.handExtrasReady);
+    this.lastPinchPosition = new THREE.Vector3();
+    this.currentPinchPosition = new THREE.Vector3();
+    this.camera = this.el.sceneEl.camera.el;
+    this.rig = this.data.rig;
+  },
+  setPinch: function (isPinching, evt) {
+    if (isPinching) {
+      if (!this.isPinching) this.lastPinchPosition.copy(evt.detail.position);
+      this.currentPinchPosition.copy(evt.detail.position);
+    }
+
+    this.isPinching = isPinching;
+  },
+  handExtrasReady: function (evt) {
+    this.jointAPI = evt.detail.data.jointAPI;
+  },
+  remove: function () {
+    this.el.removeEventListener("hand-tracking-extras-ready", this.handExtrasReady);
+    this.el.removeEventListener("pinchstarted", this.pinchUp);
+    this.el.removeEventListener("pinchmoved", this.pinchUp);
+    this.el.removeEventListener("pinchended", this.pinchDown);
+  },
+  tick: function () {
+    const pinchDiff = new THREE.Vector3(0, 0, 0);
+    const tmpv = new THREE.Vector3();
+    const tmp2 = new THREE.Vector3();
+    return function () {
+      if (!this.jointAPI) return;
+      if (!this.data.rig) return;
+      if (!this.isPinching) return;
+      const index_tip = this.jointAPI.getIndexTip();
+      if (!index_tip.isValid()) return;
+      const rig = this.data.rig;
+      const lastPinchPosition = this.lastPinchPosition;
+      const currentPinchPosition = this.currentPinchPosition;
+      tmpv.copy(lastPinchPosition);
+      tmp2.copy(currentPinchPosition);
+      rig.object3D.localToWorld(tmpv);
+      rig.object3D.localToWorld(tmp2);
+      pinchDiff.copy(tmpv).multiplyScalar(-1).add(tmp2).multiplyScalar(-1 * this.data.speed);
+      rig.object3D.position.add(pinchDiff);
+      lastPinchPosition.copy(currentPinchPosition);
+    };
+  }()
+});
+exports.component = component;
+
+},{}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.component = void 0;
+const component = AFRAME.registerComponent("drag-rotate", {
+  schema: {
+    rig: {
+      type: "selector"
+    },
+    fingerToHMDHeight: {
+      default: 0.15
+    },
+    fingerToHMDDistance: {
+      default: 0.6
+    }
+  },
+  init: function () {
+    this.isPinching = false;
+    this.pinchUp = this.setPinch.bind(this, true);
+    this.pinchDown = this.setPinch.bind(this, false);
+    this.handExtrasReady = this.handExtrasReady.bind(this);
+    this.el.addEventListener("pinchstarted", this.pinchUp);
+    this.el.addEventListener("pinchended", this.pinchDown);
+    this.el.addEventListener("hand-tracking-extras-ready", this.handExtrasReady);
+    this.camera = this.el.sceneEl.camera.el;
+    this.rig = this.data.rig;
+  },
+  setPinch: function (isPinching) {
+    this.isPinching = isPinching;
+  },
+  handExtrasReady: function (evt) {
+    this.joints = evt.detail.data.joints;
+  },
+  remove: function () {
+    this.el.removeEventListener("hand-tracking-extras-ready", this.handExtrasReady);
+    this.el.removeEventListener("pinchstarted", this.pinchUp);
+    this.el.removeEventListener("pinchended", this.pinchDown);
+  },
+  tick: function () {
+    const indexPosition = new THREE.Vector3();
+    const cameraPosition = new THREE.Vector3();
+    const hand_camera_orientation = new THREE.Vector2();
+    const UP = new THREE.Vector3(0, 1, 0);
+    var prevAngle = undefined;
+
+    function stopDragging(el) {
+      prevAngle = undefined;
+      el.emit("dragend");
+    }
+
+    return function () {
+      if (!this.joints) return;
+      let el = this.el;
+      let index = this.joints.I_Tip;
+
+      if (!index.isValid()) {
+        return stopDragging(el);
+      }
+
+      index.getPosition(indexPosition);
+      cameraPosition.copy(this.camera.object3D.position);
+      let userdata = this.data;
+
+      if (userdata.fingerToHMDHeight) {
+        // check if index finger is on the HMD level
+        if (Math.abs(indexPosition.y - cameraPosition.y) > userdata.fingerToHMDHeight) {
+          return stopDragging(el);
+        }
+      }
+
+      if (userdata.fingerToHMDDistance) {
+        // check index finger to HMD distance
+        if (indexPosition.distanceTo(cameraPosition) > userdata.fingerToHMDDistance) {
+          return stopDragging(el);
+        }
+      }
+
+      if (this.isPinching) {
+        // get the "initial" angle
+        let z = indexPosition.z - this.camera.object3D.position.z;
+        let x = indexPosition.x - this.camera.object3D.position.x;
+        hand_camera_orientation.set(x, z).normalize();
+        let angle = Math.atan2(hand_camera_orientation.y, hand_camera_orientation.x);
+
+        if (prevAngle === undefined) {
+          prevAngle = angle;
+          el.emit("dragstart");
+          return;
+        }
+
+        let theta = -(prevAngle - angle);
+        prevAngle = angle; // use a global
+
+        cameraPosition.setFromMatrixPosition(this.camera.object3D.matrixWorld); // why getWorldPosition isn't working lol
+
+        let point = cameraPosition; // rotate the rig around the camera
+
+        let rig = this.rig;
+        rig.object3D.position.add(point.negate()); // remove the offset
+
+        rig.object3D.position.applyAxisAngle(UP, theta); // rotate the POSITION
+
+        rig.object3D.position.add(point.negate()); // re-add the offset
+
+        rig.object3D.rotateOnAxis(UP, theta); // rotate the OBJECT
+      } else {
+        return stopDragging(el);
+      }
+    };
+  }()
+});
+exports.component = component;
+
+},{}],4:[function(require,module,exports){
 /* global THREE, AFRAME, Element  */
 var cylinderTexture = require('./lib/cylinderTexture');
 var parabolicCurve = require('./lib/ParabolicCurve');
@@ -493,7 +682,7 @@ function createDefaultPlane(size) {
     material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
     return new THREE.Mesh(geometry, material);
 }
-},{"./lib/ParabolicCurve":4,"./lib/RayCurve":5,"./lib/cylinderTexture":6}],3:[function(require,module,exports){
+},{"./lib/ParabolicCurve":6,"./lib/RayCurve":7,"./lib/cylinderTexture":8}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -654,7 +843,7 @@ const component = AFRAME.registerComponent("hand-teleport", {
 });
 exports.component = component;
 
-},{"./extended-teleport-controls":2}],4:[function(require,module,exports){
+},{"./extended-teleport-controls":4}],6:[function(require,module,exports){
 /* global THREE */
 // Parabolic motion equation, y = p0 + v0*t + 1/2at^2
 function parabolicCurveScalar (p0, v0, a, t) {
@@ -671,7 +860,7 @@ function parabolicCurve (p0, v0, a, t, out) {
 
 module.exports = parabolicCurve;
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /* global THREE */
 var RayCurve = function (numPoints, width) {
   this.geometry = new THREE.BufferGeometry();
@@ -679,7 +868,7 @@ var RayCurve = function (numPoints, width) {
   this.uvs = new Float32Array(numPoints * 2 * 2);
   this.width = width;
 
-  this.geometry.addAttribute('position', new THREE.BufferAttribute(this.vertices, 3).setDynamic(true));
+  this.geometry.setAttribute('position', new THREE.BufferAttribute(this.vertices, 3).setUsage(THREE.DynamicDrawUsage));
 
   this.material = new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
@@ -734,123 +923,7 @@ RayCurve.prototype = {
 
 module.exports = RayCurve;
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports = 'url(data:image/png;base64,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)';
-
-},{}],7:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.component = void 0;
-const component = AFRAME.registerComponent("world-drag", {
-  schema: {
-    rig: {
-      type: "selector"
-    },
-    fingerToHMDHeight: {
-      default: 0.15
-    },
-    fingerToHMDDistance: {
-      default: 0.6
-    }
-  },
-  init: function () {
-    this.isPinching = false;
-    this.pinchUp = this.setPinch.bind(this, true);
-    this.pinchDown = this.setPinch.bind(this, false);
-    this.handExtrasReady = this.handExtrasReady.bind(this);
-    this.el.addEventListener("pinchstarted", this.pinchUp);
-    this.el.addEventListener("pinchended", this.pinchDown);
-    this.el.addEventListener("hand-tracking-extras-ready", this.handExtrasReady);
-    this.camera = this.el.sceneEl.camera.el;
-    this.rig = this.data.rig;
-  },
-  setPinch: function (isPinching) {
-    this.isPinching = isPinching;
-  },
-  handExtrasReady: function (evt) {
-    this.joints = evt.detail.data.joints;
-  },
-  remove: function () {
-    this.el.removeEventListener("hand-tracking-extras-ready", this.handExtrasReady);
-    this.el.removeEventListener("pinchstarted", this.pinchUp);
-    this.el.removeEventListener("pinchended", this.pinchDown);
-  },
-  tick: function () {
-    const indexPosition = new THREE.Vector3();
-    const cameraPosition = new THREE.Vector3();
-    const hand_camera_orientation = new THREE.Vector2();
-    const UP = new THREE.Vector3(0, 1, 0);
-    var prevAngle = undefined;
-
-    function stopDragging(el) {
-      prevAngle = undefined;
-      el.emit("dragend");
-    }
-
-    return function () {
-      if (!this.joints) return;
-      let el = this.el;
-      let index = this.joints.I_Tip;
-
-      if (!index.isValid()) {
-        return stopDragging(el);
-      }
-
-      index.getPosition(indexPosition);
-      cameraPosition.copy(this.camera.object3D.position);
-      let userdata = this.data;
-
-      if (userdata.fingerToHMDHeight) {
-        // check if index finger is on the HMD level
-        if (Math.abs(indexPosition.y - cameraPosition.y) > userdata.fingerToHMDHeight) {
-          return stopDragging(el);
-        }
-      }
-
-      if (userdata.fingerToHMDDistance) {
-        // check index finger to HMD distance
-        if (indexPosition.distanceTo(cameraPosition) > userdata.fingerToHMDDistance) {
-          return stopDragging(el);
-        }
-      }
-
-      if (this.isPinching) {
-        // get the "initial" angle
-        let z = indexPosition.z - this.camera.object3D.position.z;
-        let x = indexPosition.x - this.camera.object3D.position.x;
-        hand_camera_orientation.set(x, z).normalize();
-        let angle = Math.atan2(hand_camera_orientation.y, hand_camera_orientation.x);
-
-        if (prevAngle === undefined) {
-          prevAngle = angle;
-          el.emit("dragstart");
-          return;
-        }
-
-        let theta = -(prevAngle - angle);
-        prevAngle = angle; // use a global
-
-        cameraPosition.setFromMatrixPosition(this.camera.object3D.matrixWorld); // why getWorldPosition isn't working lol
-
-        let point = cameraPosition; // rotate the rig around the camera
-
-        let rig = this.rig;
-        rig.object3D.position.add(point.negate()); // remove the offset
-
-        rig.object3D.position.applyAxisAngle(UP, theta); // rotate the POSITION
-
-        rig.object3D.position.add(point.negate()); // re-add the offset
-
-        rig.object3D.rotateOnAxis(UP, theta); // rotate the OBJECT
-      } else {
-        return stopDragging(el);
-      }
-    };
-  }()
-});
-exports.component = component;
 
 },{}]},{},[1]);
