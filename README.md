@@ -1,12 +1,7 @@
 # hand-tracking-controls-extras
 
-### Big Disclaimer
 
-Due to recent WebXR changes ([issue here](https://github.com/gftruj/aframe-hand-tracking-controls-extras/issues/2#issuecomment-775546838)) the component has some quickfixes, but may be unstable.
-
-I've posted an updated example on [glitch](https://gftruj-handstuff.glitch.me/). I'll try to make sure any other example works as well.
-
-### Little disclaimer
+### Disclaimer
 
 When I rushed at `a-frame`s finger tracking I wasn't aware, that I'm kinda reinventing the wheel.
 A great place with multiple examples is [Marlon Lückerts repository](https://github.com/marlon360/webxr-handtracking).
@@ -16,12 +11,30 @@ To all starring, and forking people - thank You! Any ideas are more then welcome
 
 ----
 
-Simplified Joints API + utility helpers like a teleporter and world drag:
 
-![Navigation](screens/navigation.gif)
+## Navigation components
 
+Teleport, drag yourself around, or rotate the world like this:
 
-## How to use it
+https://user-images.githubusercontent.com/17348360/155236391-98df435e-2949-4ea1-8a72-b7ca017ada9a.mp4
+
+With a simple setup like this:
+
+    <a-entity id="rig">
+      <a-camera></a-camera>
+      <!-- left hand can teleport, and drag the world position -->
+      <a-entity hand-tracking-controls="hand: left" hand-tracking-extras
+      hand-teleport="rig: #rig; origin: a-camera" drag-move="rig: #rig; speed: 5">
+      </a-entity>
+     
+      <!-- right hand can rotate the world by dragging -->
+      <a-entity hand-tracking-controls="hand: right" hand-tracking-extras drag-rotate="rig: #rig">
+      </a-entity>
+    </a-entity>
+
+More info in the [docs](./components)
+
+## Simplified (?) Joints API
 
 ### Hands in browser:
 Enable the experimental feature in the browser (Oculus Browser 11)
@@ -41,44 +54,43 @@ Wait for the `hand-tracking-extras-ready` event:
 
     var hand = document.getElementById("left-hand");
     hand.addEventListener("hand-tracking-extras-ready", (evt) = { 
-      var joints = evt.detail.data.joints;
+      var jointsAPI = evt.detail.data.jointsAPI;
     });
 
 Or grab the joints manually:
     
-    var joints = document.getElementById("left-hand").components["hand-tracking-extras"].joints
-    var Wrist = joints.Wrist;
+    var joints = document.getElementById("left-hand").components["hand-tracking-extras"].jointsAPI
+    var Wrist = jointsAPI.getWrist();
     console.log(Wrist.getPosition());
     
 Check out the API and the [XRHand docs](https://immersive-web.github.io/webxr-hand-input/#skeleton-joints-section).
 
-### Joints API
+## API
+
+Each joint has its "helper" method:
 
 Arguments are optional, but providing them will save memory (as otherwise internal helpers are cloned and returned);
 
 Joint object method  | Description
-------------- | ------------- 
+---------------------| ------------- 
 `getPosition(vector)` | fills the vector with the joint position
 `getDirection(vector)` | fills the vector with the normalized direction
-`getNormal(vector)` | fills the vector with the normal vector (see image below).
-`getRawQuaternion(quaternion)` | fills the quaternion with the raw joint orientation (see image below).
-`getQuaternion(quaternion)` | fills the quaternion with a "correct" joint orientation (see image below). 
+`getNormal(vector)` | fills the vector with the normal vector.
+`getQuaternion(quaternion)` | fills the quaternion with the joint orientation. 
 `getRadius()` | get joint radius
 `isValid()` | whether we could read the pose data
 
+Joints
 
-#### Visual aid
+Grab the joints with:
+   
+    // jointsAPI.get<Finger><Bone>()
+    // example: const index_tip = jointAPI.getIndexTip();
+    // 
+    // Fingers: Wrist(special case, single bone), Index, Middle, Ring, Little
+    // Bones: Metacarpal, Proximal, Intermediate, Distal, Tip
 
- getQuaternion (above hand) vs getRawQuaternion (right from hand):
-![rawQ vs Q](https://github.com/gftruj/aframe-hand-tracking-controls-extras/blob/master/screens/orientations.jpg?raw=true "rawQ vs Q")
-
-"Normal" blue line
-![rawQ vs Q](https://github.com/gftruj/aframe-hand-tracking-controls-extras/blob/master/screens/normals.jpg?raw=true "Normals")
-
-
-### Joints
-
-From the [WebXR hand docs](https://immersive-web.github.io/webxr-hand-input/#xrjointpose):
+From the [WebXR hand docs](https://www.w3.org/TR/webxr-hand-input-1/#xrjointpose):
 
 ![rawQ vs Q](https://immersive-web.github.io/webxr-hand-input/images/hand-layout.svg?raw=true "Normals")
 
