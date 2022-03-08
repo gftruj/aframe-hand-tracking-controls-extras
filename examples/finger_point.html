@@ -1,0 +1,17 @@
+<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+<script src="https://gftruj.github.io/hand.tracking.controls.extras/dist/aframe-hand-tracking-controls-extras.js"></script>
+<script src="https://gftruj.github.io/hand.tracking.controls.extras/components/dist/hand-tracking-controls-extras-components.js"></script>
+
+<a-scene>
+    <a-box class="interactable" position="-1 0.5 -3" rotation="0 45 0" color="red"
+        animation__mouseenter="property: components.material.material.color; type: color; to: green; startEvents: mouseenter; dur: 250"
+        animation__mouseleave="property: components.material.material.color; type: color; to: red; startEvents: mouseleave; dur: 250">
+    </a-box>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <a-sky color="#ECECEC"></a-sky>
+
+    <a-entity id="leftHand" hand-tracking-controls="hand: left;" hand-tracking-extras></a-entity>
+    <a-entity id="rightHand" hand-tracking-controls="hand: right;" hand-tracking-extras>
+        <a-entity finger-cursor raycaster="objects: .interactable"></a-entity>
+    </a-entity>
+</a-scene>
