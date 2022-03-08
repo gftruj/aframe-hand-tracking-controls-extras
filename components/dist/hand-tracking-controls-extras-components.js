@@ -2,7 +2,8 @@
 require ("./src/drag-rotate")
 require ("./src/drag-move")
 require ("./src/hand-teleport")
-},{"./src/drag-move":2,"./src/drag-rotate":3,"./src/hand-teleport":5}],2:[function(require,module,exports){
+require ("./src/finger-cursor")
+},{"./src/drag-move":2,"./src/drag-rotate":3,"./src/finger-cursor":5,"./src/hand-teleport":6}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -64,9 +65,8 @@ const component = AFRAME.registerComponent("drag-move", {
       const currentPinchPosition = this.currentPinchPosition;
       tmpv.copy(lastPinchPosition);
       tmp2.copy(currentPinchPosition);
-      rig.object3D.localToWorld(tmpv);
-      rig.object3D.localToWorld(tmp2);
       pinchDiff.copy(tmpv).multiplyScalar(-1).add(tmp2).multiplyScalar(-1 * this.data.speed);
+      rig.object3D.localToWorld(pinchDiff);
       rig.object3D.position.add(pinchDiff);
       lastPinchPosition.copy(currentPinchPosition);
     };
@@ -682,7 +682,127 @@ function createDefaultPlane(size) {
     material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
     return new THREE.Mesh(geometry, material);
 }
-},{"./lib/ParabolicCurve":6,"./lib/RayCurve":7,"./lib/cylinderTexture":8}],5:[function(require,module,exports){
+},{"./lib/ParabolicCurve":7,"./lib/RayCurve":8,"./lib/cylinderTexture":9}],5:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.component = void 0;
+const component = AFRAME.registerComponent("finger-cursor", {
+  schema: {
+    lineColor: {
+      default: "blue"
+    },
+    lineLength: {
+      default: "5"
+    },
+    pointThreshold: {
+      default: 0.95
+    }
+  },
+  init: function () {
+    this.el.setAttribute("line", {
+      "color": "blue",
+      "start": "0 0 0",
+      "opacity": 0.25,
+      "end": "0 0 -2"
+    });
+    this.el.setAttribute("cursor", {
+      "rayOrigin": "entity",
+      "fuse": "true"
+    });
+    this.activated = false;
+    this.handEl = this.el.parentNode;
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseLeave = this.onMouseLeave.bind(this);
+    this.onHandTrackingLoaded = this.onHandTrackingLoaded.bind(this);
+    this.el.addEventListener("mouseenter", this.onMouseEnter);
+    this.el.addEventListener("mouseleave", this.onMouseLeave);
+    this.handEl.addEventListener("hand-tracking-extras-ready", this.onHandTrackingLoaded);
+  },
+  onMouseEnter: function (evt) {
+    this.isec = evt.detail.intersectedEl;
+  },
+  onMouseLeave: function () {
+    this.isec = null;
+  },
+  onHandTrackingLoaded: function (evt) {
+    this.jointAPI = evt.detail.data.jointAPI;
+  },
+  activate: function () {
+    this.activated = true;
+    this.el.components.cursor.play();
+    this.el.setAttribute("line", "visible", this.activated);
+  },
+  deactivate: function () {
+    this.activated = false;
+    this.el.components.cursor.pause();
+    this.el.setAttribute("line", "visible", this.activated);
+  },
+  setLineLength: function (d) {
+    if (this.currentLineLen && this.currentLineLen == d) return;
+    this.currentLineLen = d;
+    this.el.setAttribute("line", "end", AFRAME.utils.coordinates.stringify({
+      x: 0,
+      y: 0,
+      z: -d
+    }));
+  },
+  remove: function () {
+    this.el.removeAttribute("cursor");
+    this.el.removeAttribute("line");
+  },
+  tick: function () {
+    const ITipDir = new THREE.Vector3();
+    const ITipPosition = new THREE.Vector3();
+    const ITipQuaternion = new THREE.Quaternion();
+    const IProximalDir = new THREE.Vector3();
+    return function () {
+      if (!this.jointAPI) return;
+      const IProximalBone = this.jointAPI.getIndexProximal();
+      const ITipBone = this.jointAPI.getIndexTip();
+
+      if (!(IProximalBone.isValid() && ITipBone.isValid())) {
+        if (this.activated) this.deactivate();
+        return;
+      }
+
+      IProximalBone.getDirection(IProximalDir);
+      ITipBone.getDirection(ITipDir);
+      ITipBone.getPosition(ITipPosition);
+      ITipBone.getQuaternion(ITipQuaternion);
+      const handMesh = this.handEl.getObject3D("mesh"); // TODO(pm) calc local position
+
+      const mesh = this.el.getObject3D("mesh") || this.el.object3D;
+      mesh.position.copy(ITipPosition);
+      mesh.quaternion.copy(ITipQuaternion); // show / hide line
+
+      if (IProximalDir.dot(ITipDir) >= this.data.pointThreshold) {
+        if (!this.activated) this.activate();
+      } else if (this.activated) {
+        this.deactivate();
+      } // line length
+
+
+      if (this.activated) {
+        if (this.isec) {
+          const rayEl = this.el.components.raycaster;
+          const intersection = rayEl.getIntersection(this.isec);
+
+          if (intersection) {
+            this.setLineLength(intersection.point.distanceTo(ITipPosition));
+          }
+        } else {
+          this.setLineLength(this.data.lineLength);
+        }
+      }
+    };
+  }()
+});
+exports.component = component;
+
+},{}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -843,7 +963,7 @@ const component = AFRAME.registerComponent("hand-teleport", {
 });
 exports.component = component;
 
-},{"./extended-teleport-controls":4}],6:[function(require,module,exports){
+},{"./extended-teleport-controls":4}],7:[function(require,module,exports){
 /* global THREE */
 // Parabolic motion equation, y = p0 + v0*t + 1/2at^2
 function parabolicCurveScalar (p0, v0, a, t) {
@@ -860,7 +980,7 @@ function parabolicCurve (p0, v0, a, t, out) {
 
 module.exports = parabolicCurve;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /* global THREE */
 var RayCurve = function (numPoints, width) {
   this.geometry = new THREE.BufferGeometry();
@@ -923,7 +1043,7 @@ RayCurve.prototype = {
 
 module.exports = RayCurve;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = 'url(data:image/png;base64,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)';
 
 },{}]},{},[1]);
