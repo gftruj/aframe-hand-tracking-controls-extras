@@ -63,25 +63,25 @@ export function HandData() {
 
         getIndexMetacarpal: () => joints.I_Metacarpal,
         getIndexProximal: () => joints.I_Proximal,
-        getIndexIntermediat: () => joints.I_Intermediate,        
+        getIndexIntermediate: () => joints.I_Intermediate,        
         getIndexDistal: () => joints.I_Distal,
         getIndexTip: () => joints.I_Tip,
 
         getMiddleMetacarpal: () => joints.M_Metacarpal,
         getMiddleProximal: () => joints.M_Proximal,
-        getMiddleIntermediat: () => joints.M_Intermediate,        
+        getMiddleIntermediate: () => joints.M_Intermediate,        
         getMiddleDistal: () => joints.M_Distal,
         getMiddleTip: () => joints.M_Tip,
 
         getRingMetacarpal: () => joints.R_Metacarpal,
         getRingProximal: () => joints.R_Proximal,
-        getRingIntermediat: () => joints.R_Intermediate,        
+        getRingIntermediate: () => joints.R_Intermediate,        
         getRingDistal: () => joints.R_Distal,
         getRingTip: () => joints.R_Tip,
 
         getLittleMetacarpal: () => joints.L_Metacarpal,
         getLittleProximal: () => joints.L_Proximal,
-        getLittleIntermediat: () => joints.L_Intermediate,        
+        getLittleIntermediate: () => joints.L_Intermediate,        
         getLittleDistal: () => joints.L_Distal,
         getLittleTip: () => joints.L_Tip,
     }
