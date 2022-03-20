@@ -6,6 +6,8 @@
 When I rushed at `a-frame`s finger tracking I wasn't aware, that I'm kinda reinventing the wheel.
 A great place with multiple examples is [Marlon Lückerts repository](https://github.com/marlon360/webxr-handtracking).
 
+Another great repo with gesture detection is [Ada Rose Cannon handy-work](https://github.com/AdaRoseCannon/handy-work)
+
 On the other hand, I've learned a lot doing this, and am fully willing to continue :)
 To all starring, and forking people - thank You! Any ideas are more then welcome ( i.e. in form of an issue )
 
@@ -129,9 +131,8 @@ L_Tip | XRHand.LITTLE_PHALANX_TIP (24)
 
 Provide:
 
-0. helper components - stats, and pinch-cursor
 
 1. a simple API for Joints orientation and relations:
     - `.islookingUp()`, `isHorizontallyAligned()`, `.isCloseTo(other)`, `orientedLike(other)`
 
-2. Gesture detection. Define a gesture using the above orientations and relations and let the component do the rest.
+2. Integrate navigation components with Adas `handy-work`
