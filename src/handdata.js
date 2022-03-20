@@ -2,15 +2,16 @@ import { JointObject } from './JointObject';
 
 export function HandData() {
     // float32 array helpers
-    const Quaternion_Size = 4;
-    const Vector_Size = 3;
     const Joint_Count = 25;
-
+    const rotMtx = {
+        elements: new Float32Array(16)
+    }
+    
     // Sacred keepers of all data available through the Object oriented JointObject
-    var rawQuaternion_array = new Float32Array(Quaternion_Size * Joint_Count);
-    var position_array = new Float32Array(Vector_Size * Joint_Count);
-    var radius_array = new Float32Array(Joint_Count);
-    var validity_array = new Int8Array(Joint_Count);
+    const radii = new Float32Array(Joint_Count);
+    const transforms = new Float32Array(4*4 * Joint_Count);
+    var validPoses = false;
+
 
     // Threejs helpers. 
     var tmpVector = new THREE.Vector3();
@@ -55,7 +56,7 @@ export function HandData() {
     this.joints = joints;
     this.jointAPI = {
         getWrist: () => joints.Wrist,
-        
+
         getThumbMetacarpal: () => joints.T_Metacarpal,
         getThumbProximal: () => joints.T_Proximal,
         getThumbDistal: () => joints.T_Distal,
@@ -63,114 +64,80 @@ export function HandData() {
 
         getIndexMetacarpal: () => joints.I_Metacarpal,
         getIndexProximal: () => joints.I_Proximal,
-        getIndexIntermediate: () => joints.I_Intermediate,        
+        getIndexIntermediate: () => joints.I_Intermediate,
         getIndexDistal: () => joints.I_Distal,
         getIndexTip: () => joints.I_Tip,
 
         getMiddleMetacarpal: () => joints.M_Metacarpal,
         getMiddleProximal: () => joints.M_Proximal,
-        getMiddleIntermediate: () => joints.M_Intermediate,        
+        getMiddleIntermediate: () => joints.M_Intermediate,
         getMiddleDistal: () => joints.M_Distal,
         getMiddleTip: () => joints.M_Tip,
 
         getRingMetacarpal: () => joints.R_Metacarpal,
         getRingProximal: () => joints.R_Proximal,
-        getRingIntermediate: () => joints.R_Intermediate,        
+        getRingIntermediate: () => joints.R_Intermediate,
         getRingDistal: () => joints.R_Distal,
         getRingTip: () => joints.R_Tip,
 
         getLittleMetacarpal: () => joints.L_Metacarpal,
         getLittleProximal: () => joints.L_Proximal,
-        getLittleIntermediate: () => joints.L_Intermediate,        
+        getLittleIntermediate: () => joints.L_Intermediate,
         getLittleDistal: () => joints.L_Distal,
         getLittleTip: () => joints.L_Tip,
     }
-    
+
     // iterate through the poses and update the arrays
     this.updateData = (controller, frame, referenceSpace) => {
-
-        for (let jointRef in this.joints) {
-            // the XRHand joints can be nulls
-            const joint = controller.hand.get(this.joints[jointRef].id);
-            if (!joint) continue;
-
-            // grab the pose and gather data
-            var rawPose = frame.getJointPose(joint, referenceSpace);
-            if (rawPose) {
-                setDataFromPose(this.joints[jointRef].num, rawPose)
-            } else {
-                setValidityById(this.joints[jointRef].num, false);
-            }
-        }
+        frame.fillJointRadii(controller.hand.values(), radii);
+        validPoses = frame.fillPoses(controller.hand.values(), referenceSpace, transforms)
+        if (!validPoses) return;
     }
 
-    function setDataFromPose(id, rawPose) {
-        // orientation
-        tmpQuaternion.copy(rawPose.transform.orientation)
-        setPoseQuaternionById(id, tmpQuaternion)
-
-        // position. 
-        tmpVector.copy(rawPose.transform.position);
-        setPositionById(id, tmpVector);
-
-        // radius
-        setRadiusById(id, rawPose.radius)
-
-        // validity
-        setValidityById(id, true);
-    }
-
-    // "normal" is actually the "inside" 
+    // "normal" helper 
     const normalQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
 
-    function toForward(vector) {
-        return vector.set(0, 0, -1);
-    }
 
     this.getOrientedQuaternion = (id, _quaternion) => {
-        return this.getPoseQuaternion(id, _quaternion);
+        return this.getQuaternion(id, _quaternion);
     }
 
-    this.getDirection = (id, _vector) => {
-        let vector = _vector ? _vector : tmpVector.clone();
-        toForward(vector).applyQuaternion(this.getOrientedQuaternion(id, tmpQuaternion));
-        return vector.copy(vector);
+    this.getDirection = (id , _vector) => {
+        // normalized e[ 8 ], e[ 9 ], e[ 10 ] 
+        const mtxOffset = id * 16;
+        const vector = _vector ? _vector : tmpVector.clone();
+        return vector.fromArray(transforms, mtxOffset + 8).normalize().negate();
+
     }
 
     this.getNormal = (id, _vector) => {
         let vector = _vector ? _vector : tmpVector.clone();
-        this.getOrientedQuaternion(id, tmpQuaternion).multiply(normalQuaternion);
-
+        this.getQuaternion(id, tmpQuaternion).multiply(normalQuaternion)
         tmpDummy.quaternion.copy(tmpQuaternion)
         tmpDummy.getWorldDirection(vector);
         return vector;
     }
 
     /* Pose Setters and getters */
-    function setPoseQuaternionById(id, quaternion) {
-        quaternion.toArray(rawQuaternion_array, id * Quaternion_Size)
-    }
-
-    function setPositionById(id, vector) {
-        vector.toArray(position_array, id * Vector_Size)
-    }
-
-    function setRadiusById(id, radius) {
-        radius_array[id] = radius;
-    }
-
-    function setValidityById(id, validity) {
-        validity_array[id] = validity;
-    }
-
-    this.getPoseQuaternion = (id, _quaternion) => {
+    this.getQuaternion = (id, _quaternion) => {
+        const mtxOffset = id * 16;
         let quaternion = _quaternion ? _quaternion : tmpQuaternion.clone();
-        return quaternion.fromArray(rawQuaternion_array, id * Quaternion_Size);
+        var idx = 0;
+        for (var i = mtxOffset; i <= mtxOffset + 12; i++) {
+            rotMtx.elements[idx++] = transforms[i];
+        }
+        quaternion.setFromRotationMatrix(rotMtx);
+        return quaternion;
     }
     this.getPosition = (id, _vector) => {
+        // position is 12 13 14 in the world matrix
+        const mtxOffset = id * 16;
+
         let vector = _vector ? _vector : tmpVector.clone();
-        return vector.fromArray(position_array, id * Vector_Size);
+        return vector.fromArray(transforms, mtxOffset + 12);
     }
-    this.getRadius = (id) => radius_array[id];
-    this.getValidity = (id) => validity_array[id];
+    this.getRadius = (id) => {
+        return radii[id];
+    }
+    this.getValidity = () => validPoses;
 } 

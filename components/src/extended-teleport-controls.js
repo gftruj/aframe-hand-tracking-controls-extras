@@ -304,13 +304,9 @@ module.exports = AFRAME.registerComponent('extended-teleport-controls', {
     onButtonUp: (function () {
         const teleportOriginWorldPosition = new THREE.Vector3();
         const newRigLocalPosition = new THREE.Vector3();
-        const newHandPosition = [new THREE.Vector3(), new THREE.Vector3()]; // Left and right
-        const handPosition = new THREE.Vector3();
-        const UP = new THREE.Vector3(0, 1, 0);
 
         return function (evt) {
             if (!this.active) { return; }
-
             // Hide the hit point and the curve
             this.onAbort();
 

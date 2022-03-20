@@ -3,6 +3,7 @@ require('./extended-teleport-controls');
 export const component = AFRAME.registerComponent("hand-teleport", {
   schema: {
     rig: { type: "selector" },
+    xr: {default: true},
     origin: { type: "selector" },
     fadeSphereRadius: { default: "0.1" },
     fadeDuration: { default: 200 }
@@ -14,8 +15,8 @@ export const component = AFRAME.registerComponent("hand-teleport", {
     this.tpEntity.setAttribute(tp_comp_name, {
       "startEvents": "tp-up",
       "endEvents": "tp-down",
-      "abortEvents": "tp-abort",  // I need a "nevermind" feature
       "cameraRig": this.data.rig,
+      "abortEvents": "tp-abort",  // I need a "nevermind" feature
       "teleportOrigin": this.data.origin
     })
     this.el.appendChild(this.tpEntity)
@@ -90,7 +91,7 @@ export const component = AFRAME.registerComponent("hand-teleport", {
     this.tpUp = !this.tpUp;
   },
   handExtrasReady: function (evt) {
-    this.joints = evt.detail.data.joints;
+    this.jointAPI = evt.detail.data.jointAPI;
   },
   remove: function () {
     this.fadeSphere.removeEventListener("animationcomplete__fadeout", this.sphereFaded);
@@ -104,13 +105,10 @@ export const component = AFRAME.registerComponent("hand-teleport", {
 
     return function () {
       // grab hand data if valid
-      if (!this.joints) return;
+      if (!this.jointAPI) return;
 
       // teleport origin
-      let wrist = this.joints.Wrist;
-
-      // teleport when the index is perp. do the wrist
-      let indexIntermediate = this.joints.I_Intermediate;
+      let wrist = this.jointAPI.getWrist();
 
       if (!wrist.isValid()) {
         // if the tp is up - hide it

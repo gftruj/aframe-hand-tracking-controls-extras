@@ -1,29 +1,31 @@
 {
   "name": "aframe-hand-tracking-controls-extras",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "build": "npm run build-extras && npm run build:components",
+    "dev": "npm run watch:full",
+    "build": "concurrently \"npm run build-extras\" \"npm run build:full\"",
     "build-extras": "npm run build:max && npm run build:min",
     "build:min": "uglifyjs dist/aframe-hand-tracking-controls-extras.js > dist/aframe-hand-tracking-controls-extras.min.js",
     "build:max": "browserify src/hand-tracking-extras.js -p esmify > dist/aframe-hand-tracking-controls-extras.js",
-    "build:components": "browserify components/index.js -p esmify > components/dist/hand-tracking-controls-extras-components.js"
+    "build:full": "browserify full.js -p esmify > dist/hand-extras.js",
+    "watch:full": "watchify full.js -p esmify -o dist/hand-extras.js"
   },
   "devDependencies": {
-    "aframe": "^1.0.4",
-    "super-three": "^0.123.1",
-    "browserify": "*",
-    "esmify": "*",
-    "uglify-es": "*"
+    "concurrently":"^7.0.0",
+    "browserify":"^17.0.0",
+    "esmify":"^2.1.1",
+    "uglify-es":"^3.3.9",
+    "cached-path-relative":"^1.1.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gftruj/aframe-hand-tracking-controls-extras.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["aframe", "webxr", "hands", "webvr"],
+  "author": "gftruj",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/gftruj/aframe-hand-tracking-controls-extras/issues"
   },

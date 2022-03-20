@@ -5,6 +5,10 @@ export class JointObject {
         this.parent = parent;
     }
 
+    getId() {
+        return this.id
+    }
+
     getPosition(_vector) {
         return this.parent.getPosition(this.num, _vector);
     }
@@ -17,12 +21,8 @@ export class JointObject {
         return this.parent.getNormal(this.num, _vector);
     }
 
-    getRawQuaternion(_quaternion) {
-        return this.parent.getPoseQuaternion(this.num, _quaternion)
-    }
-
     getQuaternion(_quaternion) {
-        return this.parent.getOrientedQuaternion(this.num, _quaternion);
+        return this.parent.getQuaternion(this.num, _quaternion);
     }
 
     getRadius() {

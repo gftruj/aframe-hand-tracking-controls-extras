@@ -54,18 +54,15 @@ export const component = AFRAME.registerComponent("drag-move", {
             const currentPinchPosition = this.currentPinchPosition;
             tmpv.copy(lastPinchPosition)
             tmp2.copy(currentPinchPosition)
-            
-
 
             pinchDiff
                 .copy(tmpv)
                 .multiplyScalar(-1)
                 .add(tmp2)
-                .multiplyScalar(-1 * this.data.speed);
-                rig.object3D.localToWorld(pinchDiff)
-    
+                .multiplyScalar(-1 * this.data.speed)
+                .applyQuaternion(rig.object3D.quaternion)
+                
             rig.object3D.position.add(pinchDiff)
-
             lastPinchPosition.copy(currentPinchPosition);
         }
     })()

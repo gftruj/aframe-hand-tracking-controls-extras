@@ -1,0 +1,147 @@
+<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+<script src="../dist/hand-tracking-controls-extras-full.js"></script>
+<script>
+    AFRAME.registerComponent("foo", {
+        init: function () {
+            this.debugaxes = [];
+            let geo = new THREE.SphereGeometry(0.005)
+            let mat = new THREE.MeshNormalMaterial();
+            for (let i = 0; i < 26; i++) {
+                let dummy = new THREE.Mesh(geo, mat);
+                this.el.sceneEl.object3D.add(dummy);
+
+                const axesHelper = new THREE.AxesHelper(0.025);
+                dummy.add(axesHelper);
+                this.debugaxes.push(dummy)
+            }
+
+            this.el.addEventListener("hand-tracking-extras-ready", e => {
+                this.joints = e.detail.data.joints;
+                this.jointAPI = e.detail.data.jointAPI;
+            })
+
+
+
+            this.points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(10, 0, 0)];
+            this.directionLine = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(this.points),
+                new THREE.LineBasicMaterial({
+                    color: 0x0000ff
+                }));
+
+            this.normalLine = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(this.points),
+                new THREE.LineBasicMaterial({
+                    color: 0x00ffaa
+                }));
+
+
+            this.el.sceneEl.object3D.add(this.directionLine);
+            this.el.sceneEl.object3D.add(this.normalLine);
+        },
+        tick: (function () {
+            let v = new THREE.Vector3();
+            let d = new THREE.Vector3();
+
+
+            return function () {
+                if (!this.jointAPI) return;
+                if (!this.jointAPI.getWrist().isValid()) return;
+
+                let mprox = this.jointAPI.getMiddleProximal();
+                let itip = this.jointAPI.getIndexTip();
+
+                itip.getPosition(this.points[0]);
+                itip.getPosition(this.points[1]);
+
+                itip.getDirection(v).multiplyScalar(0.25);
+                this.points[1].add(v);
+                this.directionLine.geometry.setFromPoints(this.points);
+
+                this.points[1].copy(this.points[0]);
+                itip.getNormal(v).multiplyScalar(0.15);
+                this.points[1].add(v);
+                this.normalLine.geometry.setFromPoints(this.points);
+
+                let index = 0;
+                for (let name in this.joints) {
+                    index++;
+                    let joint = this.joints[name];
+                    if (!joint.isValid()) return;
+
+                    joint.getPosition(this.debugaxes[index].position)
+                    joint.getQuaternion(this.debugaxes[index].quaternion)
+                    this.debugaxes[index].position.y += 0.1
+                }
+            }
+        })()
+    })
+    
+    AFRAME.registerComponent("log-hand-joint", {
+        schema: {
+            joint: { default: "Wrist" },
+            hand: { type: "selector" }
+        },
+        init: function () {
+            this.el.setAttribute("text", {
+                "color": "black",
+                "value": "waiting for data..."
+            });
+
+        },
+        update: function () {
+            if (!this.data.hand) return
+            this.data.hand.addEventListener("hand-tracking-extras-ready", e => {
+                this.jointAPI = e.detail.data.jointAPI;
+            })
+        },
+        tick: (function () {
+            const data = {
+                position: new THREE.Vector3(),
+                quaternion: new THREE.Quaternion(),
+                direction: new THREE.Vector3(),
+                normal: new THREE.Vector3(),
+                radius: 0,
+                valid: false
+            }
+
+            return function (t, dt) {
+                if (!this.jointAPI) return;
+                const joint = this.jointAPI["get" + this.data.joint]();
+                joint.getPosition(data.position)
+                joint.getQuaternion(data.quaternion)
+                joint.getDirection(data.direction)
+                joint.getNormal(data.normal)
+                data.radius = joint.getRadius()
+                data.valid = joint.isValid()
+                const text = "Joint: " + joint.getId() + "\n" + this.stringifyJointData(data)
+                this.el.setAttribute("text", "value", text)
+            }
+        })(),
+        stringifyVec(vec) {
+            return vec.x.toFixed(2) + " " + vec.y.toFixed(2) + " " + vec.z.toFixed(2);
+        },
+        stringifyJointData: function (data) {
+            const stringifyVec = this.stringifyVec
+            return "Position: " + stringifyVec(data.position) + "\n" +
+                "Quaternion: " + stringifyVec(data.quaternion) + " " + data.quaternion.w.toFixed(2) + '\n' +
+                "Direction: " + stringifyVec(data.direction) + "\n" +
+                "Normal: " + stringifyVec(data.normal) + "\n" +
+                "Radius: " + (100 * data.radius).toFixed(4) + " cm \n" +
+                "Valid: " + data.valid
+        }
+    })
+</script>
+
+<a-scene>
+    <a-entity position="-1 1.6 -2" log-hand-joint="joint: IndexDistal; hand: #leftHand"></a-entity>
+    <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
+    <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <a-sky color="#ECECEC"></a-sky>
+
+    <a-entity id="leftHand" hand-tracking-controls="hand: left;" hand-tracking-extras foo></a-entity>
+    <a-entity id="rightHand" hand-tracking-controls="hand: right;" hand-tracking-extras foo>
+    </a-entity>
+</a-scene>

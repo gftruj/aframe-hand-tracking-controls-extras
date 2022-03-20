@@ -77,7 +77,6 @@ export const component = AFRAME.registerComponent("finger-cursor", {
             ITipBone.getPosition(ITipPosition)
             ITipBone.getQuaternion(ITipQuaternion)
 
-            const handMesh = this.handEl.getObject3D("mesh") // TODO(pm) calc local position
             const mesh = this.el.getObject3D("mesh") || this.el.object3D
 
             mesh.position.copy(ITipPosition)
