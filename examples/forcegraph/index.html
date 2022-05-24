@@ -1,0 +1,127 @@
+<head>
+    <title>My A-Frame Scene</title>
+    <script src="https://unpkg.com/aframe"></script>
+    <script src="https://unpkg.com/aframe-forcegraph-component"></script>
+    <script src="https://gftruj.github.io/hand.tracking.controls.extras/dist/aframe-hand-tracking-controls-extras.js"></script>
+    <script src="https://gftruj.github.io/hand.tracking.controls.extras/components/dist/hand-tracking-controls-extras-components.js"></script>
+
+        <script>
+            AFRAME.registerComponent("scaler", {
+                init: function() {
+                    this.graph = document.querySelector("[forcegraph]");
+                    const rightHand = document.getElementById("right");
+                    const leftHand = document.getElementById("left");
+
+                    this.rPinch = new THREE.Vector3();
+                    this.rPinchActive = false;
+                    this.lPinch = new THREE.Vector3();
+                    this.lPinchActive = false;
+
+                    rightHand.addEventListener("pinchstarted", evt => {
+                        this.rPinchActive = true;
+                        this.rPinch.copy(evt.detail.position)
+                    })
+                    rightHand.addEventListener("pinchmoved", evt => {
+                        this.rPinch.copy(evt.detail.position)
+                    })
+                    rightHand.addEventListener("pinchended", evt => {
+                        this.rPinchActive = false;
+                        this.baseDistance = 0;
+                    })
+                    leftHand.addEventListener("pinchstarted", evt => {
+                        this.lPinchActive = true;
+                        this.lPinch.copy(evt.detail.position)
+                    })
+                    leftHand.addEventListener("pinchmoved", evt => {
+                        this.lPinch.copy(evt.detail.position)
+                    })
+                    leftHand.addEventListener("pinchended", evt => {
+                        this.lPinchActive = false;
+                        this.baseDistance = 0;
+                    })
+                    this.currentScale = 1;
+                },
+                tick: function() {
+                    if (!this.lPinchActive || !this.rPinchActive) return;
+                    if (!this.baseDistance) {
+                        this.currentScale = this.graph.object3D.scale.x;
+                        this.baseDistance = this.lPinch.distanceTo(this.rPinch);
+                    }
+                    const currentDistance = this.lPinch.distanceTo(this.rPinch);
+                    var scale = currentDistance / this.baseDistance;
+                    scale = scale * this.currentScale;
+                    this.graph.object3D.scale.set(scale, scale, scale);
+                }
+            })
+            AFRAME.registerComponent("rotator", {
+                init: function() {
+                    const graph = document.querySelector("[forcegraph]");
+                    const rightHand = document.getElementById("right");
+                    const leftHand = document.getElementById("left");
+                    const rPinch = new THREE.Vector3();
+
+                    rightHand.addEventListener("pinchstarted", evt => {
+                        rPinch.copy(evt.detail.position)
+                    })
+
+                    rightHand.addEventListener("pinchmoved", evt => {
+                        if (lPinchActive) return;
+
+                        const pos = evt.detail.position;
+                        if (Math.abs(pos.x - rPinch.x) < 0.01) return;
+
+                        const alpha = pos.x > rPinch.x ? 0.09 : -0.09;
+                        const rotation = graph.object3D.rotation.y
+                        graph.object3D.rotation.set(0, alpha + rotation, 0)
+                        rPinch.copy(evt.detail.position)
+                    })
+
+
+                    var rPinchActive = false;
+                    var lPinchActive = false;
+                    rightHand.addEventListener("pinchended", evt => {
+                        rPinchActive = false;
+                    })
+                    leftHand.addEventListener("pinchstarted", evt => {
+                        lPinchActive = true;
+                    })
+
+                    leftHand.addEventListener("pinchended", evt => {
+                        lPinchActive = false;
+                    })
+                }
+            })
+        </script>
+  </head>
+  
+  <body>
+    <a-scene stats scaler rotator renderer="logarithmicDepthBuffer: true">
+        <a-entity cursor="rayOrigin: mouse; mouseCursorStylesEnabled: true;" raycaster="objects: [forcegraph];"></a-entity>
+        <a-entity id="left" hand-tracking-controls="hand: left" ></a-entity>
+        <a-entity id="right" hand-tracking-controls="hand: right;" hand-tracking-extras>
+            <a-entity  finger-cursor raycaster="objects: [forcegraph]; lineColor: steelblue; lineOpacity: 0.85;"></a-entity>
+        </a-entity>
+        <a-camera
+          look-controls="pointerLockEnabled: false"
+          wasd-controls="fly: true; acceleration: 600;"
+        >
+          <!-- <a-cursor color="lavender" opacity="0.5" raycaster="objects: [forcegraph]"></a-cursor> -->
+          <a-text
+            id="forcegraph-tooltip"
+            position="0 -0.25 -1"
+            width="2"
+            align="center"
+            color="lavender"
+          ></a-text>
+        </a-camera>
+        <a-sky color="#002"></a-sky>
+  
+        <a-entity 
+        position="0 1 0"
+        forcegraph="
+          json-url: https://vasturiano.github.io/aframe-forcegraph-component/examples/basic/miserables.json;
+          node-auto-color-by: group;
+          on-node-hover: node => document.querySelector('#forcegraph-tooltip').setAttribute('value', node ? node.id : '');
+          on-node-click: node => document.querySelector('#forcegraph-tooltip').setAttribute('value', `Clicked on ${node.id}!`);
+        "></a-entity>
+  </body>
