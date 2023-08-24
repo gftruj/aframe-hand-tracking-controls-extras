@@ -406,7 +406,7 @@ module.exports = AFRAME.registerComponent('extended-teleport-controls', {
 
     isValidNormalsAngle: function (collisionNormal) {
         var angleNormals = this.referenceNormal.angleTo(collisionNormal);
-        return (THREE.Math.RAD2DEG * angleNormals <= this.data.landingMaxAngle);
+        return (THREE.MathUtils.radToDeg(angleNormals) <= this.data.landingMaxAngle);
     },
 });
 
@@ -480,7 +480,7 @@ function createDefaultPlane(size) {
     var geometry;
     var material;
 
-    geometry = new THREE.PlaneBufferGeometry(size, size);
+    geometry = new THREE.PlaneGeometry(size, size);
     geometry.rotateX(-Math.PI / 2);
     material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
     return new THREE.Mesh(geometry, material);
