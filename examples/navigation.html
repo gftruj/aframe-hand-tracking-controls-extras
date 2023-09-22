@@ -1,7 +1,7 @@
-<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-<script src="https://unpkg.com/aframe-environment-component@1.3.1/dist/aframe-environment-component.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@56d77f99494e01b6918612c526ae514f45d178a4/dist/aframe-master.min.js"></script>
+<script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
 
-<script src="../dist/hand-extras.js"></script>
+<script src="../../dist/aframe-hand-tracking-controls-extras-full.js"></script>
 <script src="./components/obelisk.js"></script>
 
 <a-scene>
@@ -19,7 +19,7 @@
     <a-camera>
     </a-camera>
     <a-entity id="left-hand" hand-tracking-controls="hand: left" hand-tracking-extras
-      hand-teleport="rig: #rig; origin: a-camera" drag-move="rig: #rig; speed: 5">
+      hand-teleport="rig: #rig; origin: a-camera" >
     </a-entity>
     <a-entity id="right-hand" hand-tracking-controls="hand: right" hand-tracking-extras 
       drag-rotate="rig: #rig">
