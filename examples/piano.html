@@ -6,7 +6,7 @@
     <title>PianoQuest!</title>
     <meta name="description" content="A-Frame - PianoQuest">
 
-    <script src="https://aframe.io/releases/1.1.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-cubemap-component@2.1.1/dist/aframe-cubemap-component.min.js"></script>
     <script src="https://code.createjs.com/1.0.0/soundjs.min.js"></script>
     <script src="../dist/aframe-hand-tracking-controls-extras.js"></script>
@@ -129,7 +129,7 @@
         AFRAME.registerComponent("piano", {
             init: function () {
                 /* Natural Keys */
-                let naturalKeyGeometry = new THREE.BoxBufferGeometry(0.02, 0.005, 0.1);
+                let naturalKeyGeometry = new THREE.BoxGeometry(0.02, 0.005, 0.1);
                 const naturalRange = ["A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5"];
                 const pianoPath = "assets/piano/";
                 const extension = ".mp3";
@@ -143,7 +143,7 @@
                 })
 
                 /* Flat keys */
-                let flatKeyGeometry = new THREE.BoxBufferGeometry(0.0175, 0.005, 0.075);
+                let flatKeyGeometry = new THREE.BoxGeometry(0.0175, 0.005, 0.075);
                 const flatrange = ["Bb3", null, "Db4", "Eb4", null, "Gb4", "Ab4", "Bb4", null, "Db5", "Eb5"];
                 flatrange.forEach((note, index) => {
                     // skip the nulls
