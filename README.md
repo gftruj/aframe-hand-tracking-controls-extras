@@ -39,11 +39,6 @@ More info in the [docs](./components)
 ## Simplified (?) Joints API
 
 ### Hands in browser:
-Enable the experimental feature in the browser (Oculus Browser 11)
-
-    1.  Visit [chrome://flags/](chrome://flags/)
-    2.  Enable _WebXR experiences with joints tracking (#webxr-hands)_
-
 Import the script:
 
     <script src="https://gftruj.github.io/hand.tracking.controls.extras/dist/aframe-hand-tracking-controls-extras.js"></script>
@@ -55,14 +50,14 @@ Add the `hand-tracking-extras` to the hand:
 Wait for the `hand-tracking-extras-ready` event:
 
     var hand = document.getElementById("left-hand");
-    hand.addEventListener("hand-tracking-extras-ready", (evt) = { 
+    hand.addEventListener("hand-tracking-extras-ready", (evt) => {
       var jointsAPI = evt.detail.data.jointsAPI;
     });
 
 Or grab the joints manually:
     
     var joints = document.getElementById("left-hand").components["hand-tracking-extras"].jointsAPI
-    var Wrist = jointsAPI.getWrist();
+    var Wrist = joints.getWrist();
     console.log(Wrist.getPosition());
     
 Check out the API and the [XRHand docs](https://immersive-web.github.io/webxr-hand-input/#skeleton-joints-section).
