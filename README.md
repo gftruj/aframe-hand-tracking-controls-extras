@@ -39,11 +39,6 @@ More info in the [docs](./components)
 ## Simplified (?) Joints API
 
 ### Hands in browser:
-Enable the experimental feature in the browser (Oculus Browser 11)
-
-    1.  Visit [chrome://flags/](chrome://flags/)
-    2.  Enable _WebXR experiences with joints tracking (#webxr-hands)_
-
 Import the script:
 
     <script src="https://gftruj.github.io/hand.tracking.controls.extras/dist/aframe-hand-tracking-controls-extras.js"></script>
