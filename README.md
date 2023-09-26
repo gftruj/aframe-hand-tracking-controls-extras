@@ -57,7 +57,7 @@ Wait for the `hand-tracking-extras-ready` event:
 Or grab the joints manually:
     
     var joints = document.getElementById("left-hand").components["hand-tracking-extras"].jointsAPI
-    var Wrist = jointsAPI.getWrist();
+    var Wrist = joints.getWrist();
     console.log(Wrist.getPosition());
     
 Check out the API and the [XRHand docs](https://immersive-web.github.io/webxr-hand-input/#skeleton-joints-section).
