@@ -50,7 +50,7 @@ Add the `hand-tracking-extras` to the hand:
 Wait for the `hand-tracking-extras-ready` event:
 
     var hand = document.getElementById("left-hand");
-    hand.addEventListener("hand-tracking-extras-ready", (evt) = { 
+    hand.addEventListener("hand-tracking-extras-ready", (evt) => {
       var jointsAPI = evt.detail.data.jointsAPI;
     });
 
