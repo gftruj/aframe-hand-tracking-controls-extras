@@ -6,7 +6,7 @@ export const component = AFRAME.registerComponent("finger-cursor", {
     },
     init: function () {
         this.el.setAttribute("line", {
-            "color": "blue",
+            "color": "steelblue",
             "start": "0 0 0",
             "opacity": 0.25,
             "end": "0 0 -2"

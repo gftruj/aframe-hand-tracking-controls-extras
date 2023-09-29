@@ -9,8 +9,8 @@
     "build-extras": "npm run build:max && npm run build:min",
     "build:min": "uglifyjs dist/aframe-hand-tracking-controls-extras.js > dist/aframe-hand-tracking-controls-extras.min.js",
     "build:max": "browserify src/hand-tracking-extras.js -p esmify > dist/aframe-hand-tracking-controls-extras.js",
-    "build:full": "browserify full.js -p esmify > dist/hand-extras.js",
-    "watch:full": "watchify full.js -p esmify -o dist/hand-extras.js"
+    "build:full": "browserify full.js -p esmify > dist/aframe-hand-tracking-controls-extras-full.js",
+    "watch:full": "watchify full.js -p esmify -o dist/aframe-hand-tracking-controls-extras-full.js"
   },
   "devDependencies": {
     "concurrently":"^7.0.0",
