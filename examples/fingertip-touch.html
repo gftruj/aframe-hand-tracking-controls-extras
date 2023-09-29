@@ -1,0 +1,31 @@
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="../dist/aframe-hand-tracking-controls-extras-full.js"></script>
+
+<a-scene cursor="rayOrigin: mouse" raycaster="objects: [data-raycastable]">
+    <a-cylinder data-raycastable position="1 0.75 -0.5" radius="0.5" height="1.5" color="#FFC65D" animation__1="property: components.material.material.color;
+                  type: color;
+                  to: blue;
+                  dur: 50; 
+                  easing: linear; 
+                  startEvents: click" animation__2="property: components.material.material.color;
+                  type: color;
+                  to: #FFC65D;
+                  dur: 50; 
+                  easing: linear; 
+                  startEvents: animationcomplete__1">
+    </a-cylinder>
+
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <a-entity id="rig">
+        <a-camera>
+        </a-camera>
+    <a-entity id="leftHand" hand-tracking-controls="hand: left;" hand-tracking-extras></a-entity>
+    <a-entity id="rightHand" 
+            hand-tracking-controls="hand: right;" 
+            hand-tracking-extras 
+            world-drag="rig: #rig"
+            touchy-fingertip="debug: true">
+    </a-entity>
+    </a-entity>
+    <a-sky color="#ECECEC"></a-sky>
+</a-scene>
